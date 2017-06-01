@@ -23,6 +23,7 @@ require __DIR__ . '/../../../../lib/composer/autoload.php';
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\BadResponseException;
+use GuzzleHttp\Psr7\Request;
 
 /**
  * Mailhog-related functions
@@ -39,11 +40,13 @@ trait MailTool {
 	public function getEmails() {
 		$fullUrl = $this->mailhogUrl;
 		$client = new Client();
-		$options = ['headers' => ['Content-Type' => 'application/json']];
 		try {
-			$this->response = $client->send(
-				$client->createRequest('GET', $fullUrl, $options)
+			$request = new Request(
+				'GET',
+				$fullUrl,
+				['Content-Type' => 'application/json']
 			);
+			$this->response = $client->send($request);
 		} catch (BadResponseException $ex) {
 			$this->response = $ex->getResponse();
 		}

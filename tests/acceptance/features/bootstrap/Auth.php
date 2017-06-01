@@ -21,6 +21,7 @@
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\BadResponseException;
+use GuzzleHttp\Psr7\Request;
 
 require __DIR__ . '/../../../../lib/composer/autoload.php';
 
@@ -66,22 +67,27 @@ trait Auth {
 		$url, $method, $authHeader = null, $useCookies = false
 	) {
 		$fullUrl = $this->getBaseUrl() . $url;
+		$options = [];
 		try {
+			$headers = [
+				'OCS_APIREQUEST' => 'true',
+				'requesttoken' => $this->requestToken
+			];
+			if ($authHeader) {
+				$headers['Authorization'] = $authHeader;
+			}
 			if ($useCookies) {
-				$request = $this->client->createRequest(
-					$method, $fullUrl, [
+				$options = [
 					'cookies' => $this->cookieJar,
-					]
-				);
-			} else {
-				$request = $this->client->createRequest($method, $fullUrl);
+				];
 			}
 			if ($authHeader) {
-				$request->setHeader('Authorization', $authHeader);
+				$headers['Authorization'] = $authHeader;
 			}
-			$request->setHeader('OCS-APIREQUEST', 'true');
-			$request->setHeader('requesttoken', $this->requestToken);
-			$this->response = $this->client->send($request);
+			$headers['OCS-APIREQUEST'] = 'true';
+			$headers['requesttoken'] = $this->requestToken;
+			$request = new Request($method, $fullUrl, $headers);
+			$this->response = $this->client->send($request, $options);
 		} catch (BadResponseException $ex) {
 			$this->response = $ex->getResponse();
 		}
@@ -189,7 +195,7 @@ trait Auth {
 		$client = new Client();
 		$response = $client->post(
 			$loginUrl, [
-				'body' => [
+				'form_params' => [
 					'user' => $user,
 					'password' => $this->getPasswordForUser($user),
 					'requesttoken' => $this->requestToken,
