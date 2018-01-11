@@ -325,4 +325,14 @@ interface IManager {
 	 */
 	public function outgoingServer2ServerSharesAllowed();
 
+	/**
+	 * Updates the received state for the recipient.
+	 *
+	 * @param IShare $share
+	 * @param string $recipientId
+	 * @param int $state
+	 * @throws \InvalidArgumentException If $share is a link share or the $recipient does not match
+	 * @since 10.0.6
+	 */
+	public function updateReceivedShareState(IShare $share, $recipientId, $state);
 }
