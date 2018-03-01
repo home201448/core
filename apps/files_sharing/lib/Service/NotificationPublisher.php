@@ -48,6 +48,20 @@ class NotificationPublisher {
 		$this->urlGenerator = $urlGenerator;
 	}
 
+	private function getAffectedUsers(IShare $share) {
+		$users = [];
+		if ($share->getShareType() === \OCP\Share::SHARE_TYPE_GROUP) {
+			// notify all group members
+			$group = $this->groupManager->get($share->getSharedWith());
+			// TODO: scale / chunk / ...
+			foreach ($group->getUsers() as $user) {
+				yield $user->getUID();
+			}
+		} else if ($share->getShareType() === \OCP\Share::SHARE_TYPE_USER) {
+			yield $share->getSharedWith();
+		}
+	}
+
 	/**
 	 * Send notification for accepting share
 	 *
@@ -59,19 +73,12 @@ class NotificationPublisher {
 			$autoAccept = false;
 		}
 
-		$users = [];
-		if ($share->getShareType() === \OCP\Share::SHARE_TYPE_GROUP) {
-			// notify all group members
-			$group = $this->groupManager->get($share->getSharedWith());
-			// TODO: scale / chunk / ...
-			$users = array_map(function(IUser $user) {
-				return $user->getUID();
-			}, $group->getUsers());
-		} else if ($share->getShareType() === \OCP\Share::SHARE_TYPE_USER) {
-			$users = [$share->getSharedWith()];
-		}
+		$fileLink = $this->urlGenerator->linkToRouteAbsolute('files.viewcontroller.showFile', ['fileId' => $share->getNode()->getId()]);
+		$endpointUrl = $this->urlGenerator->getAbsoluteURL(
+			$this->urlGenerator->linkTo('', 'ocs/v1.php/apps/files_sharing/api/v1/shares/pending/' . $share->getId())
+		);
 
-		foreach ($users as $userId) {
+		foreach ($this->getAffectedUsers($share) as $userId) {
 			$notification = $this->notificationManager->createNotification();
 			$notification->setApp('files_sharing')
 				->setUser($userId)
@@ -83,25 +90,19 @@ class NotificationPublisher {
 			);
 			if ($autoAccept) {
 				$notification->setSubject('local_share_accepted', [$share->getShareOwner(), $share->getSharedBy(), $share->getNode()->getName()]);
-				$notification->setLink(
-					$this->urlGenerator->linkToRouteAbsolute('files.viewcontroller.showFile', ['fileId' => $share->getNode()->getId()])
-				);
+				$notification->setLink($fileLink);
 			} else {
 				$notification->setSubject('local_share', [$share->getShareOwner(), $share->getSharedBy(), $share->getNode()->getName()]);
 
-				$endpointUrl = $this->urlGenerator->getAbsoluteURL(
-					$this->urlGenerator->linkTo('', 'ocs/v1.php/apps/files_sharing/api/v1/shares/pending/' . $share->getId())
-				);
+				$acceptAction = $notification->createAction();
+				$acceptAction->setLabel('accept');
+				$acceptAction->setLink($endpointUrl, 'POST');
+				$notification->addAction($acceptAction);
 
 				$declineAction = $notification->createAction();
-				$declineAction->setLabel('decline')
-					->setLink($endpointUrl, 'DELETE');
+				$declineAction->setLabel('decline');
+				$declineAction->setLink($endpointUrl, 'DELETE');
 				$notification->addAction($declineAction);
-
-				$acceptAction = $notification->createAction();
-				$acceptAction->setLabel('accept')
-					->setLink($endpointUrl, 'POST');
-				$notification->addAction($acceptAction);
 			}
 
 			$this->notificationManager->notify($notification);
