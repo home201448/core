@@ -42,6 +42,7 @@ use Test\TestCase;
 use OCA\Files_Sharing\Service\NotificationPublisher;
 use OCP\Files\Folder;
 use OCP\Files\Node;
+use OCP\Share\Exceptions\ShareNotFound;
 
 /**
  * Class Share20OCSTest
@@ -3119,6 +3120,140 @@ class Share20OCSTest extends TestCase {
 			$this->assertCount(2, $result->getData());
 			$this->assertNotContains($userShareDifferentState, $result->getData(), 'result contains only share from requested state');
 		}
+	}
+
+	public function providesAcceptRejectShare() {
+		return [
+			['acceptShare', \OCP\Share::STATE_ACCEPTED],
+			['declineShare', \OCP\Share::STATE_REJECTED],
+		];
+	}
+
+	/**
+	 * @dataProvider providesAcceptRejectShare
+	 */
+	public function testAcceptRejectShare($method, $expectedState) {
+		$userShare = $this->makeReceivedUserShareForOperation();
+
+		$this->shareManager->expects($this->once())
+			->method('updateReceivedShareState')
+			->with($userShare, 'currentUser', $expectedState);
+
+		$ocs = $this->mockFormatShare();
+		$ocs->method('formatShare')->will($this->returnArgument(0));
+		$result = $ocs->$method(123);
+
+		$this->assertContains($userShare, $result->getData(), 'result contains user share');
+	}
+
+	/**
+	 * @dataProvider providesAcceptRejectShare
+	 */
+	public function testAcceptRejectShareApiDisabled($method, $expectedState) {
+		$ocs = $this->getOcsDisabledAPI();
+
+		$expected = new \OC\OCS\Result(null, 404, 'Share API is disabled');
+		$result = $ocs->$method(123);
+
+		$this->assertEquals($expected, $result);
+	}
+
+	private function makeReceivedUserShareForOperation($shareId = 123) {
+		$node = $this->createMock(Node::class);
+		$node->expects($this->at(0))
+			->method('lock');
+		$node->expects($this->at(1))
+			->method('unlock');
+
+		$userShare = $this->newShare();
+		$userShare->setId($shareId);
+		$userShare->setShareOwner('shareOwner');
+		$userShare->setSharedWith('currentUser');
+		$userShare->setShareType(\OCP\Share::SHARE_TYPE_USER);
+		$userShare->setState(\OCP\Share::STATE_PENDING);
+		$userShare->setPermissions(\OCP\Constants::PERMISSION_ALL);
+		$userShare->setNode($node);
+
+		$this->shareManager->expects($this->any())
+			->method('getShareById')
+			->with('ocinternal:' . $shareId)
+			->willReturn($userShare);
+
+		return $userShare;
+	}
+
+	/**
+	 * @dataProvider providesAcceptRejectShare
+	 */
+	public function testAcceptRejectShareInvalidId($method, $expectedState) {
+		$this->shareManager->expects($this->any())
+			->method('getShareById')
+			->with('ocinternal:123')
+			->will($this->throwException(new ShareNotFound()));
+
+		$this->shareManager->expects($this->never())
+			->method('updateReceivedShareState');
+
+		$expected = new \OC\OCS\Result(null, 404, 'Wrong share ID, share doesn\'t exist');
+		$result = $this->ocs->$method(123);
+
+		$this->assertEquals($expected, $result);
+	}
+
+	/**
+	 * @dataProvider providesAcceptRejectShare
+	 */
+	public function testAcceptRejectShareAccessDenied($method, $expectedState) {
+		$userShare = $this->makeReceivedUserShareForOperation(123);
+		$userShare->setPermissions(0);
+
+		$this->shareManager->expects($this->never())
+			->method('updateReceivedShareState');
+
+		$expected = new \OC\OCS\Result(null, 404, 'Wrong share ID, share doesn\'t exist');
+		$result = $this->ocs->$method(123);
+
+		$this->assertEquals($expected, $result);
+	}
+
+	/**
+	 * @dataProvider providesAcceptRejectShare
+	 */
+	public function testAcceptRejectShareAccessNotRecipient($method, $expectedState) {
+		$userShare = $this->makeReceivedUserShareForOperation(123);
+
+		$this->shareManager->expects($this->never())
+			->method('updateReceivedShareState');
+
+		$userShare->setShareOwner('currentUser');
+
+		$expected = new \OC\OCS\Result(null, 403, 'Only recipient can change accepted state');
+		$result = $this->ocs->$method(123);
+
+		$this->assertEquals($expected, $result);
+
+		$userShare->setShareOwner('anotherUser');
+		$userShare->setSharedBy('currentUser');
+
+		$result = $this->ocs->$method(123);
+
+		$this->assertEquals($expected, $result);
+	}
+
+	/**
+	 * @dataProvider providesAcceptRejectShare
+	 */
+	public function testAcceptRejectShareOperationError($method, $expectedState) {
+		$userShare = $this->makeReceivedUserShareForOperation(123);
+
+		$this->shareManager->expects($this->once())
+			->method('updateReceivedShareState')
+			->will($this->throwException(new \Exception('operation error')));
+
+		$expected = new \OC\OCS\Result(null, 400, 'operation error');
+		$result = $this->ocs->$method(123);
+
+		$this->assertEquals($expected, $result);
 	}
 }
 

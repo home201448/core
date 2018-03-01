@@ -909,6 +909,7 @@ class Share20OCS {
 		// only recipient can accept/reject share
 		if ($share->getShareOwner() === $this->currentUser->getUID() ||
 			$share->getSharedBy() === $this->currentUser->getUID()) {
+			$share->getNode()->unlock(ILockingProvider::LOCK_SHARED);
 			return new \OC\OCS\Result(null, 403, $this->l->t('Only recipient can change accepted state'));
 		}
 
@@ -921,9 +922,7 @@ class Share20OCS {
 
 		$share->getNode()->unlock(\OCP\Lock\ILockingProvider::LOCK_SHARED);
 
-		// TODO: send out notification to owner
-
-		return new \OC\OCS\Result($this->formatShare($share));
+		return new \OC\OCS\Result([$this->formatShare($share)]);
 	}
 
 	/**
