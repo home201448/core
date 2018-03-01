@@ -107,7 +107,7 @@ class NotificationPublisherTest extends TestCase {
 			->method('setUser')
 			->with($userId)
 			->will($this->returnSelf());
-		$notification->expects($this->once())
+		$notification->expects($this->any())
 			->method('setLink')
 			->with($link)
 			->will($this->returnSelf());
@@ -233,39 +233,36 @@ class NotificationPublisherTest extends TestCase {
 		$endpointUrl = 'ocs/v1.php/apps/files_sharing/api/v1/shares/pending/12300';
 
 		$action1 = $this->createMock(\OCP\Notification\IAction::class);
-		/*
 		$action1->expects($this->once())
 			->method('setLabel')
 			->with('accept')
 			->will($this->returnSelf());
-		 */
 		$action1->expects($this->once())
 			->method('setLink')
 			->with($endpointUrl, 'POST')
 			->will($this->returnSelf());
 		$action2 = $this->createMock(\OCP\Notification\IAction::class);
-		/*
 		$action2->expects($this->once())
 			->method('setLabel')
 			->with('decline')
 			->will($this->returnSelf());
-		 */
 		$action2->expects($this->once())
 			->method('setLink')
 			->with($endpointUrl, 'DELETE')
 			->will($this->returnSelf());
 
 		$notification->method('createAction')
-			->will($this->onConsecutiveCalls($action1, $action1));
+			->will($this->onConsecutiveCalls($action1, $action2));
 
-		$notification->expects($this->at(0))
-			->method('addAction')
-			->with($action1);
-		$notification->expects($this->at(1))
-			->method('addAction')
-			->with($action2);
+		$addedActions = [];
+		$notification->method('addAction')
+			->will($this->returnCallback(function ($action) use (&$addedActions) {
+				$addedActions[] = $action;
+			}));
 
 		$this->publisher->sendNotification($share);
+
+		$this->assertEquals([$action1, $action2], $addedActions);
 	}
 }
 
