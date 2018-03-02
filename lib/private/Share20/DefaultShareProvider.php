@@ -237,12 +237,11 @@ class DefaultShareProvider implements IShareProvider {
 				->execute();
 
 			/*
-			 * Now update the permissions for all children that have not set it to 0
+			 * Now update the permissions for all children
 			 */
 			$qb = $this->dbConn->getQueryBuilder();
 			$qb->update('share')
 				->where($qb->expr()->eq('parent', $qb->createNamedParameter($share->getId())))
-				->andWhere($qb->expr()->neq('permissions', $qb->createNamedParameter(0)))
 				->set('permissions', $qb->createNamedParameter($share->getPermissions()))
 				->execute();
 
@@ -420,6 +419,9 @@ class DefaultShareProvider implements IShareProvider {
 				$qb->update('share')
 					->set('accepted', $qb->createNamedParameter($share->getState()))
 					->set('file_target', $qb->createNamedParameter($share->getTarget()))
+					// make sure to reset the permissions to the one of the parent share,
+					// as legacy entries with zero permissions might still exist
+					->set('permissions', $qb->createNamedParameter($share->getPermissions()))
 					->where($qb->expr()->eq('id', $qb->createNamedParameter($data['id'])))
 					->execute();
 			}
@@ -1060,9 +1062,8 @@ class DefaultShareProvider implements IShareProvider {
 				// If $shareParent is contained in $shareIdToShareMap, it means that needs resolving
 				if (isset($shareIdToShareMap[$shareParent])) {
 					$share = $shareIdToShareMap[$shareParent];
-					$share->setPermissions(intval($data['permissions']));
-					$share->setTarget($data['file_target']);
 					$share->setState(intval($data['accepted']));
+					$share->setTarget($data['file_target']);
 				}
 			}
 			$stmt->closeCursor();

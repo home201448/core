@@ -893,7 +893,7 @@ class Share20OCS {
 		}
 
 		try {
-			$share = $this->getShareById($id);
+			$share = $this->getShareById($id, $this->currentUser->getUID());
 		} catch (ShareNotFound $e) {
 			return new \OC\OCS\Result(null, 404, $this->l->t('Wrong share ID, share doesn\'t exist'));
 		}
@@ -931,8 +931,10 @@ class Share20OCS {
 	 * @return bool
 	 */
 	protected function canAccessShare(\OCP\Share\IShare $share) {
-		// A file with permissions 0 can't be accessed by us. So Don't show it
-		if ($share->getPermissions() === 0) {
+		// A file with permissions 0 can't be accessed by us,
+		// unless it's a rejected sub-group share in which case we want it visible to let the user accept it again
+		if ($share->getPermissions() === 0
+			&& !($share->getShareType() === \OCP\Share::SHARE_TYPE_GROUP && $share->getState() === \OCP\Share::STATE_REJECTED)) {
 			return false;
 		}
 
@@ -993,18 +995,18 @@ class Share20OCS {
 	 * @return \OCP\Share\IShare
 	 * @throws ShareNotFound
 	 */
-	private function getShareById($id) {
+	private function getShareById($id, $recipient = null) {
 		$share = null;
 
 		// First check if it is an internal share.
 		try {
-			$share = $this->shareManager->getShareById('ocinternal:'.$id);
+			$share = $this->shareManager->getShareById('ocinternal:'.$id, $recipient);
 		} catch (ShareNotFound $e) {
 			if (!$this->shareManager->outgoingServer2ServerSharesAllowed()) {
 				throw new ShareNotFound();
 			}
 
-			$share = $this->shareManager->getShareById('ocFederatedSharing:' . $id);
+			$share = $this->shareManager->getShareById('ocFederatedSharing:' . $id, $recipient);
 		}
 
 		return $share;
