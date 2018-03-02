@@ -87,6 +87,7 @@ interface IShareProvider {
 	 * @param string $recipient userId of recipient
 	 * @return \OCP\Share\IShare
 	 * @since 9.0.0
+	 * @deprecated 10.0.8 use updateForRecipient() instead
 	 */
 	public function move(\OCP\Share\IShare $share, $recipient);
 
@@ -205,7 +206,7 @@ interface IShareProvider {
 	public function userDeletedFromGroup($uid, $gid);
 
 	/**
-	 * Updates the state of a received share for a given recipient.
+	 * Updates the share entry of the given recipient
 	 *
 	 * For group shares, only the state for the given recipient is changed,
 	 * not for the whole group share.
@@ -216,5 +217,5 @@ interface IShareProvider {
 	 * @return \OCP\Share\IShare
 	 * @since 10.0.6
 	 */
-	public function updateReceivedShareState(\OCP\Share\IShare $share, $recipient, $state);
+	public function updateForRecipient(\OCP\Share\IShare $share, $recipient);
 }

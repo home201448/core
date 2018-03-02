@@ -1,6 +1,7 @@
 <?php
 /**
  * @author Roeland Jago Douma <rullzer@owncloud.com>
+ * @author Vincent Petry <pvince81@owncloud.com>
  *
  * @copyright Copyright (c) 2018, ownCloud GmbH
  * @license AGPL-3.0
@@ -33,6 +34,7 @@ use OCP\IUser;
 use OCP\IUserManager;
 use OCP\Share;
 use Test\TestCase;
+use OCP\Share\IShare;
 
 /**
  * Class DefaultShareProviderTest
@@ -2129,7 +2131,7 @@ class DefaultShareProviderTest extends TestCase {
 
 	/**
 	 * @expectedException \OC\Share20\Exception\ProviderException
-	 * @expectedExceptionMessage Invalid shareType
+	 * @expectedExceptionMessage Invalid share type 3
 	 */
 	public function testDeleteFromSelfLink() {
 		$qb = $this->dbConn->getQueryBuilder();
@@ -2162,6 +2164,17 @@ class DefaultShareProviderTest extends TestCase {
 		$share = $this->provider->getShareById($id);
 
 		$this->provider->deleteFromSelf($share, $user1);
+	}
+
+	/**
+	 * @expectedException \OC\Share20\Exception\ProviderException
+	 * @expectedExceptionMessage Can't update share of recipient for share type 3
+	 */
+	public function testUpdateForRecipientWrongType() {
+		$share = $this->createMock(IShare::class);
+		$share->method('getShareType')->willReturn(\OCP\Share::SHARE_TYPE_LINK);
+
+		$this->provider->updateForRecipient($share, 'recipient1');
 	}
 
 	public function testUpdateUser() {
@@ -2474,6 +2487,24 @@ class DefaultShareProviderTest extends TestCase {
 		$stmt->closeCursor();
 	}
 
+	public function testMoveCallsUpdateForRecipient() {
+		$share = $this->createMock(IShare::class);
+
+		$provider = $this->getMockBuilder(DefaultShareProvider::class)
+			->disableOriginalConstructor()
+			->setMethods(['updateForRecipient'])
+			->getMock();
+
+		$provider->expects($this->once())
+			->method('updateForRecipient')
+			->with($share, 'recipient1')
+			->will($this->returnArgument(0));
+
+		$returnedShare = $provider->move($share, 'recipient1');
+
+		$this->assertSame($share, $returnedShare);
+	}
+
 	public function testMoveUserShare() {
 		$id = $this->addShareToDB(Share::SHARE_TYPE_USER, 'user0', 'user1', 'user1', 'file',
 			42, 'mytaret', 31, null, null);
@@ -2497,7 +2528,7 @@ class DefaultShareProviderTest extends TestCase {
 		$share = $this->provider->getShareById($id, null);
 
 		$share->setTarget('/newTarget');
-		$this->provider->move($share, $user0);
+		$this->provider->updateForRecipient($share, 'user0');
 
 		$share = $this->provider->getShareById($id, null);
 		$this->assertSame('/newTarget', $share->getTarget());
@@ -2532,13 +2563,13 @@ class DefaultShareProviderTest extends TestCase {
 		$share = $this->provider->getShareById($id, 'user0');
 
 		$share->setTarget('/newTarget');
-		$this->provider->move($share, 'user0');
+		$this->provider->updateForRecipient($share, 'user0');
 
 		$share = $this->provider->getShareById($id, 'user0');
 		$this->assertSame('/newTarget', $share->getTarget());
 
 		$share->setTarget('/ultraNewTarget');
-		$this->provider->move($share, 'user0');
+		$this->provider->updateForRecipient($share, 'user0');
 
 		$share = $this->provider->getShareById($id, 'user0');
 		$this->assertSame('/ultraNewTarget', $share->getTarget());
