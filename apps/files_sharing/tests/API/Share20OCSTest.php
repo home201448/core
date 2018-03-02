@@ -585,6 +585,21 @@ class Share20OCSTest extends TestCase {
 		$share = $this->createMock('OCP\Share\IShare');
 		$share->method('getShareType')->willReturn(Share::SHARE_TYPE_LINK);
 		$this->assertFalse($this->invokePrivate($this->ocs, 'canAccessShare', [$share]));
+
+		// should not happen ever again, but who knows... let's cover it
+		$share = $this->createMock('OCP\Share\IShare');
+		$share->method('getShareType')->willReturn(Share::SHARE_TYPE_USER);
+		$share->method('getState')->willReturn(Share::STATE_ACCEPTED);
+		$share->method('getPermissions')->willReturn(0);
+		$this->assertFalse($this->invokePrivate($this->ocs, 'canAccessShare', [$share]));
+
+		// legacy zero permission entries from group sub-shares, let it pass
+		$share = $this->createMock('OCP\Share\IShare');
+		$share->method('getShareType')->willReturn(Share::SHARE_TYPE_GROUP);
+		$share->method('getSharedWith')->willReturn('group');
+		$share->method('getState')->willReturn(Share::STATE_REJECTED);
+		$share->method('getPermissions')->willReturn(0);
+		$this->assertTrue($this->invokePrivate($this->ocs, 'canAccessShare', [$share]));
 	}
 
 	public function testCreateShareNoPath() {
@@ -3177,7 +3192,7 @@ class Share20OCSTest extends TestCase {
 
 		$this->shareManager->expects($this->any())
 			->method('getShareById')
-			->with('ocinternal:' . $shareId)
+			->with('ocinternal:' . $shareId, 'currentUser')
 			->willReturn($userShare);
 
 		return $userShare;
