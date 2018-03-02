@@ -959,7 +959,7 @@ class FederatedShareProvider implements IShareProvider {
 	/**
 	 * @inheritdoc
 	 */
-	public function updateReceivedShareState(IShare $share, $recipient, $state) {
+	public function updateForRecipient(IShare $share, $recipient) {
 		/*
 		 * This function does nothing yet as it is just for outgoing
 		 * federated shares.
