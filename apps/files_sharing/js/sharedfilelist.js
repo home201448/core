@@ -151,11 +151,13 @@
 		},
 
 		_updateDetailsView: function(fileName, show) {
-			var $tr = this.findFileEl(fileName);
-			var shareState = parseInt($tr.attr('data-share-state'), 10);
-
-			if (shareState !== OC.Share.STATE_ACCEPTED) {
-				show = false;
+			// prevent opening details sidebar for pending shares
+			if (this._sharedWithUser) {
+				var $tr = this.findFileEl(fileName);
+				var shareState = parseInt($tr.attr('data-share-state'), 10);
+				if (shareState !== OC.Share.STATE_ACCEPTED) {
+					show = false;
+				}
 			}
 
 			return OCA.Files.FileList.prototype._updateDetailsView.call(this, fileName, show);
@@ -201,15 +203,18 @@
 			this._setCurrentDir('/', false);
 
 			var promises = [];
+			var requestData = {
+				format: 'json'
+			};
+			if (this._sharedWithUser) {
+				requestData.shared_with_me = true;
+				requestData.state = 'all';
+			}
+			requestData.include_tags = true;
 			var shares = $.ajax({
 				url: OC.linkToOCS('apps/files_sharing/api/v1') + 'shares',
 				/* jshint camelcase: false */
-				data: {
-					format: 'json',
-					shared_with_me: !!this._sharedWithUser,
-					state: 'all',
-					include_tags: true
-				},
+				data: requestData,
 				type: 'GET',
 				beforeSend: function(xhr) {
 					xhr.setRequestHeader('OCS-APIREQUEST', 'true');

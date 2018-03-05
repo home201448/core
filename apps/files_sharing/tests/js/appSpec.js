@@ -144,5 +144,83 @@ describe('OCA.Sharing.App tests', function() {
 			// restore old list
 			OCA.Files.App.fileList = oldList;
 		});
+		describe('pending shares', function() {
+			var fileData;
+			var showMenuStub;
+
+			beforeEach(function() {
+				showMenuStub = sinon.stub(OC, 'showMenu');
+				fileData = {
+					id: '111',
+					shares: [{id: '123'}],
+					name: 'testdir',
+					type: 'dir',
+					path: '/somewhere/inside/subdir',
+					counterParts: ['user2'],
+					shareOwner: 'user2'
+				};
+			});
+			afterEach(function() { 
+				showMenuStub.restore();
+			});
+			it('provides accept and reject actions for pending shares', function() {
+				fileData.shareState = OC.Share.STATE_PENDING;
+				var $tr = fileListIn.add(fileData);
+
+				expect($tr.find('.fileactions .action-accept').length).toEqual(1);
+				expect($tr.find('.fileactions .action-reject').length).toEqual(1);
+			});
+			it('provides accept action for rejected shares', function() {
+				fileData.shareState = OC.Share.STATE_REJECTED;
+				var $tr = fileListIn.add(fileData);
+
+				expect($tr.find('.fileactions .action-accept').length).toEqual(1);
+				expect($tr.find('.fileactions .action-reject').length).toEqual(0);
+			});
+			it('provides reject action in dropdown for accepted shares ', function() {
+				fileData.shareState = OC.Share.STATE_ACCEPTED;
+				var $tr = fileListIn.add(fileData);
+
+				expect($tr.find('.fileactions .action-accept').length).toEqual(0);
+				expect($tr.find('.fileactions .action-reject').length).toEqual(0);
+
+				$tr.find('.fileactions .action-menu').click();
+
+				var $menuEl = showMenuStub.getCall(0).args[1];
+				expect($menuEl.find('.action-reject').length).toEqual(1);
+				// delete action has been replaced
+				expect($menuEl.find('.action-delete').length).toEqual(0);
+			});
+
+			var actionProvider = [
+				{
+					description: 'accepting',
+					action: 'action-accept',
+					method: 'POST'
+				},
+				{
+					description: 'rejecting',
+					action: 'action-reject',
+					method: 'DELETE'
+				}
+			];
+
+			_.each(actionProvider, function(spec) {
+				it('sends server request when ' + spec.description + ' a share', function() {
+					fileData.shareState = OC.Share.STATE_PENDING;
+					var $tr = fileListIn.add(fileData);
+
+					expect(parseInt($tr.attr('data-share-state'), 10)).toEqual(fileData.shareState);
+
+					$tr.find('.fileactions .' + spec.action).click();
+
+					expect(fakeServer.requests.length).toEqual(1);
+					var request = fakeServer.requests[0];
+					expect(request.url).toEqual(OC.linkToOCS('apps/files_sharing/api/v1') + 'shares/pending/123?format=json');
+					expect(request.method).toEqual(spec.method);
+					request.respond(200, {'Content-Type': 'application/json'}, JSON.stringify({}));
+				});
+			});
+		});
 	});
 });

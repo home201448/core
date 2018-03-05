@@ -136,7 +136,7 @@ describe('OCA.Sharing.FileList tests', function() {
 			expect(fakeServer.requests.length).toEqual(2);
 			expect(fakeServer.requests[0].url).toEqual(
 				OC.linkToOCS('apps/files_sharing/api/v1') +
-				'shares?format=json&shared_with_me=true&include_tags=true'
+				'shares?format=json&shared_with_me=true&state=all&include_tags=true'
 			);
 
 			expect(fakeServer.requests[1].url).toEqual(
@@ -216,7 +216,7 @@ describe('OCA.Sharing.FileList tests', function() {
 			expect(fakeServer.requests.length).toEqual(2);
 			expect(fakeServer.requests[0].url).toEqual(
 				OC.linkToOCS('apps/files_sharing/api/v1') +
-				'shares?format=json&shared_with_me=true&include_tags=true'
+				'shares?format=json&shared_with_me=true&state=all&include_tags=true'
 			);
 			expect(fakeServer.requests[1].url).toEqual(
 				OC.linkToOCS('apps/files_sharing/api/v1') +
@@ -327,7 +327,7 @@ describe('OCA.Sharing.FileList tests', function() {
 			request = fakeServer.requests[0];
 			expect(request.url).toEqual(
 				OC.linkToOCS('apps/files_sharing/api/v1') +
-				'shares?format=json&shared_with_me=false&include_tags=true'
+				'shares?format=json&include_tags=true'
 			);
 
 			fakeServer.requests[0].respond(
@@ -369,7 +369,7 @@ describe('OCA.Sharing.FileList tests', function() {
 			request = fakeServer.requests[0];
 			expect(request.url).toEqual(
 				OC.linkToOCS('apps/files_sharing/api/v1') +
-				'shares?format=json&shared_with_me=false&include_tags=true'
+				'shares?format=json&include_tags=true'
 			);
 
 			fakeServer.requests[0].respond(
@@ -423,7 +423,7 @@ describe('OCA.Sharing.FileList tests', function() {
 			request = fakeServer.requests[0];
 			expect(request.url).toEqual(
 				OC.linkToOCS('apps/files_sharing/api/v1') +
-				'shares?format=json&shared_with_me=false&include_tags=true'
+				'shares?format=json&include_tags=true'
 			);
 
 			fakeServer.requests[0].respond(
@@ -493,7 +493,7 @@ describe('OCA.Sharing.FileList tests', function() {
 			request = fakeServer.requests[0];
 			expect(request.url).toEqual(
 				OC.linkToOCS('apps/files_sharing/api/v1') +
-				'shares?format=json&shared_with_me=false&include_tags=true'
+				'shares?format=json&include_tags=true'
 			);
 
 			fakeServer.requests[0].respond(
@@ -607,7 +607,7 @@ describe('OCA.Sharing.FileList tests', function() {
 			request = fakeServer.requests[0];
 			expect(request.url).toEqual(
 				OC.linkToOCS('apps/files_sharing/api/v1') +
-				'shares?format=json&shared_with_me=false&include_tags=true'
+				'shares?format=json&include_tags=true'
 			);
 
 			fakeServer.requests[0].respond(
@@ -660,7 +660,7 @@ describe('OCA.Sharing.FileList tests', function() {
 			request = fakeServer.requests[0];
 			expect(request.url).toEqual(
 				OC.linkToOCS('apps/files_sharing/api/v1') +
-				'shares?format=json&shared_with_me=false&include_tags=true'
+				'shares?format=json&include_tags=true'
 			);
 
 			fakeServer.requests[0].respond(

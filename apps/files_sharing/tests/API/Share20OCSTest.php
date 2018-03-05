@@ -3042,6 +3042,14 @@ class Share20OCSTest extends TestCase {
 				'/requested/path',
 				\OCP\Share::STATE_PENDING,
 			],
+			[
+				'/requested/path',
+				\OCP\Share::STATE_ACCEPTED,
+			],
+			[
+				'/requested/path',
+				'',
+			],
 		];
 	}
 
@@ -3049,34 +3057,38 @@ class Share20OCSTest extends TestCase {
 	 * @dataProvider providesGetSharesSharedWithMe
 	 */
 	public function testGetSharesSharedWithMe($requestedPath, $stateFilter) {
+		$testStateFilter = $stateFilter;
+		if ($testStateFilter === '' || $testStateFilter === 'all') {
+			$testStateFilter = \OCP\Share::STATE_ACCEPTED;
+		}
 		$userShare = $this->newShare();
 		$userShare->setShareOwner('shareOwner');
 		$userShare->setSharedWith('currentUser');
 		$userShare->setShareType(\OCP\Share::SHARE_TYPE_USER);
-		$userShare->setState(\OCP\Share::STATE_PENDING);
+		$userShare->setState($testStateFilter);
 		$userShare->setPermissions(\OCP\Constants::PERMISSION_ALL);
 		$userShareNoAccess = $this->newShare();
 		$userShareNoAccess->setShareOwner('shareOwner');
 		$userShareNoAccess->setSharedWith('currentUser');
 		$userShareNoAccess->setShareType(\OCP\Share::SHARE_TYPE_USER);
-		$userShareNoAccess->setState(\OCP\Share::STATE_PENDING);
+		$userShareNoAccess->setState($testStateFilter);
 		$userShareNoAccess->setPermissions(0);
 		$userShareDifferentState = $this->newShare();
 		$userShareDifferentState->setShareOwner('shareOwner');
 		$userShareDifferentState->setSharedWith('currentUser');
 		$userShareDifferentState->setShareType(\OCP\Share::SHARE_TYPE_USER);
-		$userShareDifferentState->setState(\OCP\Share::STATE_PENDING + 1);
+		$userShareDifferentState->setState($testStateFilter + 1);
 		$userShareDifferentState->setPermissions(\OCP\Constants::PERMISSION_ALL);
 		$groupShare = $this->newShare();
 		$groupShare->setShareOwner('shareOwner');
 		$groupShare->setSharedWith('group1');
-		$groupShare->setState(\OCP\Share::STATE_PENDING);
+		$groupShare->setState($testStateFilter);
 		$groupShare->setPermissions(\OCP\Constants::PERMISSION_ALL);
 		$groupShare->setShareType(\OCP\Share::SHARE_TYPE_GROUP);
 		$groupShareNonOwner = $this->newShare();
 		$groupShareNonOwner->setShareOwner('currentUser');
 		$groupShareNonOwner->setSharedWith('group1');
-		$groupShareNonOwner->setState(\OCP\Share::STATE_PENDING);
+		$groupShareNonOwner->setState($testStateFilter);
 		$groupShareNonOwner->setShareType(\OCP\Share::SHARE_TYPE_GROUP);
 		$groupShareNonOwner->setPermissions(\OCP\Constants::PERMISSION_ALL);
 
