@@ -235,26 +235,33 @@ OCA.Sharing.App = {
 			}
 		});
 
-		fileActions.addAdvancedFilter(function(actions, $tr) {
-			var shareState = parseInt($tr.attr('data-share-state'), 10);
+		fileActions.addAdvancedFilter(function(actions, context) {
+			var shareState = parseInt(context.$file.attr('data-share-state'), 10);
+			if (isNaN(shareState)) {
+				// called out of context ?
+				return actions;
+			}
+
 			if (shareState === OC.Share.STATE_ACCEPTED) {
-				delete(actions['Accept']);
-				if (!OC.getCapabilities()['files_sharing']['auto_accept_share']) {
-					// move "Reject" into drop down to replace "Delete" action
-					actions.Reject.type = OCA.Files.FileActions.TYPE_DROPDOWN;
-					delete(actions['Delete']);
-				}
+				delete(actions.Accept);
+				// move "Reject" into drop down to replace "Delete" action
+				actions.Reject.type = OCA.Files.FileActions.TYPE_DROPDOWN;
+				delete(actions.Delete);
 				return actions;
 			}
 
 			var newActions = [];
-			newActions.push(actions.Share);
-			if (shareState === OC.Share.STATE_PENDING || shareState === OC.Share.STATE_REJECTED) {
-				newActions.push(actions.Accept);
+			if (actions.Share) {
+				newActions.push(actions.Share);
 			}
-			if (shareState === OC.Share.STATE_PENDING) {
-				actions.Reject.type = OCA.Files.FileActions.TYPE_INLINE;
-				newActions.push(actions.Reject);
+			if (actions.Accept && actions.Reject) {
+				if (shareState === OC.Share.STATE_PENDING || shareState === OC.Share.STATE_REJECTED) {
+					newActions.push(actions.Accept);
+				}
+				if (shareState === OC.Share.STATE_PENDING) {
+					actions.Reject.type = OCA.Files.FileActions.TYPE_INLINE;
+					newActions.push(actions.Reject);
+				}
 			}
 
 			return newActions;
