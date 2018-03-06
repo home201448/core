@@ -49,6 +49,12 @@
 				return;
 			}
 
+			if (options && options.sorting) {
+				this.setSort(options.sorting.mode, options.sorting.direction, false, false);
+			} else {
+				this.setSort('sharestate', 'asc', false, false);
+			}
+
 			// TODO: consolidate both options
 			if (options && options.sharedWithUser) {
 				this._sharedWithUser = true;
@@ -467,6 +473,16 @@
 	 * (this is mostly for display purposes)
 	 * @property {String} recipientsDisplayName display name
 	 */
+
+
+	OCA.Files.FileList.Comparators.sharestate = function(fileInfo1, fileInfo2) {
+		var result = fileInfo1.shareState - fileInfo2.shareState;
+		if (result === 0) {
+			result = OCA.Files.FileList.Comparators.name(fileInfo1, fileInfo2)
+		}
+
+		return result;
+	};
 
 	OCA.Sharing.FileList = FileList;
 })();

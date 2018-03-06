@@ -35,6 +35,9 @@ describe('OCA.Sharing.FileList tests', function() {
 			'<a class="name columntitle" data-sort="name"><span>Name</span><span class="sort-indicator"></span></a>' +
 			'<span class="selectedActions hidden">' +
 			'</th>' +
+			'<th class="hidden column-sharestate">' +
+			'<a class="columntitle" data-sort="sharestate"><span class="sort-indicator"></span></a>' +
+			'</th>' +
 			'<th class="hidden column-mtime">' +
 			'<a class="columntitle" data-sort="mtime"><span class="sort-indicator"></span></a>' +
 			'</th>' +
@@ -774,6 +777,60 @@ describe('OCA.Sharing.FileList tests', function() {
 
 			expect(parseInt($tr.attr('data-share-permissions'), 10))
 				.toEqual(OC.PERMISSION_ALL - OC.PERMISSION_SHARE - OC.PERMISSION_DELETE - OC.PERMISSION_CREATE);
+		});
+	});
+	describe('sorting in shared with you view', function () {
+		beforeEach(function() {
+			var $content = $('<div id="content"></div>');
+			$('#testArea').append($content);
+			// dummy file list
+			var $div = $(
+				'<div>' +
+				'<table id="filestable">' +
+				'<thead></thead>' +
+				'<tbody id="fileList"></tbody>' +
+				'</table>' +
+				'</div>');
+			$('#content').append($div);
+
+			fileList = new OCA.Sharing.FileList($div, {
+				sharedWithUser: true
+			});
+		});
+	
+		it('sorts by state then name', function () {
+			var $tr;
+			fileList.add({
+				id: '1',
+				name: 'One.txt',
+				mimetype: 'text/plain',
+				shareState: OC.Share.STATE_REJECTED
+			});
+			fileList.add({
+				id: '2',
+				name: 'Two.txt',
+				mimetype: 'text/plain',
+				shareState: OC.Share.STATE_PENDING
+			});
+			fileList.add({
+				id: '3',
+				name: 'Three.txt',
+				mimetype: 'text/plain',
+				shareState: OC.Share.STATE_PENDING
+			});
+			fileList.add({
+				id: '4',
+				name: 'Four.txt',
+				mimetype: 'text/plain',
+				shareState: OC.Share.STATE_ACCEPTED
+			});
+
+			var $trs = fileList.$el.find('tbody tr');
+			var ids = _.map($trs, function (tr) {
+				return $(tr).attr('data-id');
+			});
+
+			expect(ids).toEqual(['4', '3', '2' , '1']);
 		});
 	});
 });
