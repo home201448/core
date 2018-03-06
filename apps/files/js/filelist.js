@@ -1554,7 +1554,8 @@
 			if (persist && OC.getCurrentUser().uid !== null) {
 				$.post(OC.generateUrl('/apps/files/api/v1/sorting'), {
 					mode: sort,
-					direction: direction
+					direction: direction,
+					view: this.id
 				});
 			}
 		},
