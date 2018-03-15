@@ -7,6 +7,8 @@
  * See the COPYING-README file.
  *
  */
+
+/* global moment */
 (function() {
 
 	/**
@@ -74,6 +76,9 @@
 		_createRow: function(fileData) {
 			// TODO: hook earlier and render the whole row here
 			var $tr = OCA.Files.FileList.prototype._createRow.apply(this, arguments);
+			var td;
+			var formatted;
+			var text;
 			var $dateColumn = $tr.find('td.date');
 			$tr.find('.filesize').remove();
 			$dateColumn.before($tr.children('td:first'));
@@ -122,11 +127,10 @@
 				$tr.attr('data-permissions', permission);
 				$tr.attr('data-share-state', fileData.shareState);
 
-				var text = '';
+				text = '';
 				var shareStateClass;
-				var iconClass;
 				if (fileData.shareState === OC.Share.STATE_REJECTED) {
-					text = t('files_sharing', 'Rejected');
+					text = t('files_sharing', 'Declined');
 					shareStateClass = 'share-state-rejected';
 				} else if (fileData.shareState === OC.Share.STATE_PENDING) {
 					text = t('files_sharing', 'Pending');
@@ -475,8 +479,12 @@
 	 */
 
 
+	OCA.Files.FileList.Comparators.SHARE_STATE_ORDER = {};
+	OCA.Files.FileList.Comparators.SHARE_STATE_ORDER[OC.Share.STATE_PENDING] = 0;
+	OCA.Files.FileList.Comparators.SHARE_STATE_ORDER[OC.Share.STATE_ACCEPTED] = 1;
+	OCA.Files.FileList.Comparators.SHARE_STATE_ORDER[OC.Share.STATE_REJECTED] = 2;
 	OCA.Files.FileList.Comparators.sharestate = function(fileInfo1, fileInfo2) {
-		var result = fileInfo1.shareState - fileInfo2.shareState;
+		var result = OCA.Files.FileList.Comparators.SHARE_STATE_ORDER[fileInfo1.shareState] - OCA.Files.FileList.Comparators.SHARE_STATE_ORDER[fileInfo2.shareState];
 		if (result === 0) {
 			result = OCA.Files.FileList.Comparators.name(fileInfo1, fileInfo2)
 		}

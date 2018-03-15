@@ -88,9 +88,10 @@ class NotificationPublisher {
 			$notification->setIcon(
 				$this->urlGenerator->imagePath('core', 'actions/shared.svg')
 			);
+			$notification->setLink($fileLink);
+
 			if ($autoAccept) {
 				$notification->setSubject('local_share_accepted', [$share->getShareOwner(), $share->getSharedBy(), $share->getNode()->getName()]);
-				$notification->setLink($fileLink);
 			} else {
 				$notification->setSubject('local_share', [$share->getShareOwner(), $share->getSharedBy(), $share->getNode()->getName()]);
 
