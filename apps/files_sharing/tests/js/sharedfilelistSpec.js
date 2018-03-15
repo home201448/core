@@ -830,7 +830,7 @@ describe('OCA.Sharing.FileList tests', function() {
 				return $(tr).attr('data-id');
 			});
 
-			expect(ids).toEqual(['4', '3', '2' , '1']);
+			expect(ids).toEqual(['3', '2' , '4', '1']);
 		});
 	});
 });

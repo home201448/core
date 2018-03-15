@@ -107,7 +107,7 @@ class NotificationPublisherTest extends TestCase {
 			->method('setUser')
 			->with($userId)
 			->will($this->returnSelf());
-		$notification->expects($this->any())
+		$notification->expects($this->once())
 			->method('setLink')
 			->with($link)
 			->will($this->returnSelf());
