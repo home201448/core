@@ -51,18 +51,22 @@
 				return;
 			}
 
-			if (options && options.sorting) {
-				this.setSort(options.sorting.mode, options.sorting.direction, false, false);
-			} else {
-				this.setSort('sharestate', 'asc', false, false);
-			}
-
 			// TODO: consolidate both options
 			if (options && options.sharedWithUser) {
 				this._sharedWithUser = true;
 			}
 			if (options && options.linksOnly) {
 				this._linksOnly = true;
+			}
+
+			if (options && options.sorting) {
+				this.setSort(options.sorting.mode, options.sorting.direction, false, false);
+			} else if (this._sharedWithUser) {
+				this.setSort('sharestate', 'asc', false, false);
+			}
+
+			if (!this._sharedWithUser) {
+				this.$el.find('.column-sharestate').remove();
 			}
 		},
 
