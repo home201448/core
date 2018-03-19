@@ -22,6 +22,7 @@
  *
  */
 
+use Behat\Gherkin\Node\TableNode;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\BadResponseException;
 use TestHelpers\SharingHelper;
@@ -1008,7 +1009,6 @@ trait Sharing {
 				PHPUnit_Framework_Assert::assertEquals(count($dataResponded), 0);
 				return 0;
 			}
-
 			foreach ($elementRows as $expectedElementsArray) {
 				//0 path, 1 permissions, 2 name
 				$nameFound = false;
@@ -1070,6 +1070,153 @@ trait Sharing {
 		$this->sendingToWith("DELETE", $url, null);
 	}
 
+	
+	/**
+	 * @When /^user "([^"]*)" (rejects|accepts) the share "([^"]*)" offered by user "([^"]*)" using the API$/
+	 * 
+	 * @param string $user
+	 * @param string $action
+	 * @param string $share
+	 * @param string $offeredBy
+	 * 
+	 * @return void
+	 */
+	public function userReactsToShareOfferedBy($user, $action, $share, $offeredBy) {
+		$dataResponded = $this->getAllShareSharedWithUser($user);
+		$shareId = null;
+		foreach ($dataResponded as $shareElement) {
+			if ((string)$shareElement['uid_owner'] === $offeredBy
+				&& (string)$shareElement['path'] === $share
+			) {
+				$shareId = (string) $shareElement['id'];
+				break;
+			}
+		}
+		if ($shareId === null) {
+			throw new Exception(
+				__METHOD__ . 
+				" could not find share $share, offered by $offeredBy to $user"
+			);
+		}
+		$url = "/apps/files_sharing/api/v{$this->sharingApiVersion}" .
+			   "/shares/pending/$shareId";
+		if ($action === "rejects") {
+			$httpRequestMethod = "DELETE";
+		} elseif ($action === "accepts") {
+			$httpRequestMethod = "POST";
+		}
+		
+		$this->userSendsHTTPMethodToAPIEndpointWithBody(
+			$user, $httpRequestMethod, $url, null
+		);
+		if ($this->response->getStatusCode() !== 200) {
+			throw new Exception(
+				__METHOD__ . " could not $action share"
+			);
+		}
+	}
+
+	/**
+	 * 
+	 * @Then /^the API should report to user "([^"]*)" that these shares are in the (pending|accepted|rejected) state$/
+	 * 
+	 * @param string $user
+	 * @param string $state
+	 * @param TableNode $table table with headings that correspond to the attributes
+	 *                         of the share e.g. "|path|uid_owner|"
+	 * 
+	 * @return void
+	 */
+	public function assertSharesOfUserAreInState($user, $state, TableNode $table) {
+		$usersShares = $this->getAllShareSharedWithUser($user, $state);
+		foreach ($table as $row) {
+			$found = false;
+			//the API returns the path without trailing slash, but we want to
+			//be able to accept trailing slashes in the step definition
+			$row['path'] = rtrim($row['path'], "/");
+			foreach ($usersShares as $share) {
+				try {
+					PHPUnit_Framework_Assert::assertArraySubset($row, $share);
+					$found = true;
+					break;
+				} catch (PHPUnit_Framework_ExpectationFailedException $e) {
+				}
+			}
+			if (!$found) {
+				PHPUnit_Framework_Assert::fail(
+					"could not find the share with this attributes " .
+					print_r($row, true)
+				);
+			}
+		}
+		
+	}
+
+	/**
+	 * @Then the API should report that no shares are shared with user :user
+	 * 
+	 * @param string $user
+	 * 
+	 * @return void
+	 */
+	public function assertThatNoSharesAreSharedWithUser($user) {
+		$usersShares = $this->getAllShareSharedWithUser($user);
+		PHPUnit_Framework_Assert::assertEmpty(
+			$usersShares, "user has " . count($usersShares) . " share(s)"
+		);
+	}
+
+	/**
+	 * 
+	 * @param string $user
+	 * @param string $state pending|accepted|rejected|all
+	 * 
+	 * @throws InvalidArgumentException
+	 * @throws Exception
+	 * 
+	 * @return array of shares that are shared with this user
+	 */
+	private function getAllShareSharedWithUser($user, $state = "all") {
+		switch ($state) {
+			case 'pending':
+				$stateCode = \OCP\Share::STATE_PENDING;
+				break;
+			case 'accepted':
+				$stateCode = \OCP\Share::STATE_ACCEPTED;
+				break;
+			case 'rejected':
+				$stateCode = \OCP\Share::STATE_REJECTED;
+				break;
+			case 'all':
+				$stateCode = "all";
+				break;
+			default:
+				throw new InvalidArgumentException(
+					__METHOD__ . ' invalid "state" given'
+				);
+				break;
+		}
+		
+		$url = "/apps/files_sharing/api/v{$this->sharingApiVersion}/shares" .
+			   "?format=json&shared_with_me=true&state=$stateCode";
+		$this->userSendsHTTPMethodToAPIEndpointWithBody(
+			$user, "GET", $url, null
+		);
+		if ($this->response->getStatusCode() !== 200) {
+			throw new Exception(
+				__METHOD__ . " could not retrieve information about shares"
+			);
+		}
+		$result = $this->response->getBody()->getContents();
+		$usersShares = json_decode($result, true);
+		if (!is_array($usersShares)) {
+			throw new Exception(
+				__METHOD__ . " API result about shares is not valid JSON"
+			);
+		}
+		return $usersShares['ocs']['data'];
+	}
+
 	/**
 	 * @return string authorization token
 	 */
@@ -1077,7 +1224,7 @@ trait Sharing {
 		if (count($this->lastShareData->data->element) > 0) {
 			return $this->lastShareData->data[0]->token;
 		}
-
+		
 		return $this->lastShareData->data->token;
 	}
 

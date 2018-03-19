@@ -415,7 +415,7 @@ trait BasicStructure {
 	 * @param string $user
 	 * @param string $verb
 	 * @param string $url
-	 * @param TableNode $body
+	 * @param TableNode|null $body
 	 *
 	 * @return void
 	 */
