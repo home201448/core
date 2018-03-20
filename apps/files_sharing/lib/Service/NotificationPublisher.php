@@ -55,7 +55,9 @@ class NotificationPublisher {
 			$group = $this->groupManager->get($share->getSharedWith());
 			// TODO: scale / chunk / ...
 			foreach ($group->getUsers() as $user) {
-				yield $user->getUID();
+				if ($user->getUID() !== $share->getShareOwner() && $user->getUID() !== $share->getSharedBy()) {
+					yield $user->getUID();
+				}
 			}
 		} else if ($share->getShareType() === \OCP\Share::SHARE_TYPE_USER) {
 			yield $share->getSharedWith();

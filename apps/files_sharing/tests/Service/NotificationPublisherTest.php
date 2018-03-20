@@ -196,10 +196,16 @@ class NotificationPublisherTest extends TestCase {
 		$groupMember2 = $this->createMock(IUser::class);
 		$groupMember2->method('getUID')->willReturn('groupMember2');
 
+		$shareOwnerUser = $this->createMock(IUser::class);
+		$shareOwnerUser->method('getUID')->willReturn('shareOwner');
+
+		$sharedByUser = $this->createMock(IUser::class);
+		$sharedByUser->method('getUID')->willReturn('sharedBy');
+
 		$group = $this->createMock(IGroup::class);
 		$group->expects($this->once())
 			->method('getUsers')
-			->willReturn([$groupMember1, $groupMember2]);
+			->willReturn([$groupMember1, $groupMember2, $shareOwnerUser, $sharedByUser]);
 
 		$this->groupManager->expects($this->once())
 			->method('get')
