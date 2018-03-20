@@ -98,6 +98,7 @@ describe('OCA.Sharing.FileList tests', function() {
 						share_type: OC.Share.SHARE_TYPE_USER,
 						share_with: 'user1',
 						share_with_displayname: 'User One',
+						state: OC.Share.STATE_ACCEPTED,
 						tags: [OC.TAG_FAVORITE],
 						mimetype: 'text/plain',
 						uid_owner: 'user2',
@@ -173,6 +174,7 @@ describe('OCA.Sharing.FileList tests', function() {
 			expect($tr.attr('data-mtime')).toEqual('11111000');
 			expect($tr.attr('data-share-owner')).toEqual('User Two');
 			expect($tr.attr('data-share-id')).toEqual('7');
+			expect($tr.attr('data-share-state')).toEqual('' + OC.Share.STATE_ACCEPTED);
 			expect($tr.attr('data-favorite')).toEqual('true');
 			expect($tr.attr('data-tags')).toEqual(OC.TAG_FAVORITE);
 			expect($tr.find('a.name').attr('href')).toEqual(
@@ -193,6 +195,7 @@ describe('OCA.Sharing.FileList tests', function() {
 			expect($tr.attr('data-mtime')).toEqual('22222000');
 			expect($tr.attr('data-share-owner')).toEqual('user3@foo.bar/');
 			expect($tr.attr('data-share-id')).toEqual('8');
+			expect($tr.attr('data-share-state')).toEqual('' + OC.Share.STATE_ACCEPTED);
 			expect($tr.attr('data-favorite')).not.toBeDefined();
 			expect($tr.attr('data-tags')).toEqual('');
 			expect($tr.find('a.name').attr('href')).toEqual(
@@ -343,6 +346,9 @@ describe('OCA.Sharing.FileList tests', function() {
 			expect($tr.attr('data-favorite')).toEqual('true');
 			expect($tr.attr('data-tags')).toEqual(OC.TAG_FAVORITE);
 			expect($tr.find('.nametext').text().trim()).toEqual('local name');
+
+			expect($tr.find('a.name').hasClass('disable-click')).toEqual(true);
+			expect($tr.find('a.name').attr('href')).toEqual('#');
 
 			var file = fileList.elementToFile($tr);
 			expect(file.shares).toEqual([{id: '7'}, {id: '8'}]);
