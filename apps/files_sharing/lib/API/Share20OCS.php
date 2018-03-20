@@ -40,6 +40,7 @@ use OCP\Share\IShare;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\EventDispatcher\GenericEvent;
 use OCA\Files_Sharing\Service\NotificationPublisher;
+use OCA\Files_Sharing\Helper;
 
 /**
  * Class Share20OCS
@@ -919,10 +920,18 @@ class Share20OCS {
 		$allShares = $this->shareManager->getSharedWith($this->currentUser->getUID(), \OCP\Share::SHARE_TYPE_USER, $node, -1, 0);
 		$allShares = array_merge($allShares, $this->shareManager->getSharedWith($this->currentUser->getUID(), \OCP\Share::SHARE_TYPE_GROUP, $node, -1, 0));
 
+		// resolve and deduplicate target if accepting
+		if ($state === \OCP\Share::STATE_ACCEPTED) {
+			$share = $this->deduplicateShareTarget($share);
+		}
+
+		$share->setState($state);
+
 		try {
-			foreach ($allShares as $share) {
-				$share->setState($state);
-				$this->shareManager->updateShareForRecipient($share, $this->currentUser->getUID());
+			foreach ($allShares as $aShare) {
+				$aShare->setState($share->getState());
+				$aShare->setTarget($share->getTarget());
+				$this->shareManager->updateShareForRecipient($aShare, $this->currentUser->getUID());
 			}
 		} catch (\Exception $e) {
 			$share->getNode()->unlock(ILockingProvider::LOCK_SHARED);
@@ -933,18 +942,43 @@ class Share20OCS {
 
 		// FIXME: needs public API!
 		\OC\Files\Filesystem::tearDown();
-		// FIXME: trigger mount for user which will also update oc_share.file_target before
-		// it is queries by the manager
+		// FIXME: trigger mount for user to make sure the new node is mounted already
+		// before formatShare resolves it
 		$this->rootFolder->getUserFolder($this->currentUser->getUID());
 
-		try {
-			// re-fetch the share with updated values
-			$share = $this->getShareById($id, $this->currentUser->getUID());
-		} catch (ShareNotFound $e) {
-			return new \OC\OCS\Result(null, 404, $this->l->t('Wrong share ID, share doesn\'t exist'));
+		return new \OC\OCS\Result([$this->formatShare($share, true)]);
+	}
+
+	/**
+	 * Deduplicate the share target in the current user home folder,
+	 * based on configured share folder
+	 *
+	 * @param IShare $share share target to deduplicate
+	 * @return IShare same share with target updated if necessary
+	 */
+	private function deduplicateShareTarget(IShare $share) {
+		$userFolder = $this->rootFolder->getUserFolder($this->currentUser->getUID());
+		$mountPoint = basename($share->getTarget());
+		$parentDir = dirname($share->getTarget());
+		if (!$userFolder->nodeExists($parentDir)) {
+			$parentDir = Helper::getShareFolder();
 		}
 
-		return new \OC\OCS\Result([$this->formatShare($share, true)]);
+		$pathAttempt = \OC\Files\Filesystem::normalizePath($parentDir . '/' . $share->getTarget());
+
+		$pathinfo = pathinfo($pathAttempt);
+		$ext = (isset($pathinfo['extension'])) ? '.'.$pathinfo['extension'] : '';
+		$name = $pathinfo['filename'];
+
+		$i = 2;
+		while ($userFolder->nodeExists($pathAttempt)) {
+			$pathAttempt = \OC\Files\Filesystem::normalizePath($parentDir . '/' . $name . ' ('.$i.')' . $ext);
+			$i++;
+		}
+
+		$share->setTarget(basename($pathAttempt));
+
+		return $share;
 	}
 
 	/**
