@@ -2,7 +2,7 @@
 * ownCloud
 *
 * @author Vincent Petry
-* @copyright Copyright (c) 2014 Vincent Petry <pvince81@owncloud.com>
+* @copyright Copyright (c) 2018 Vincent Petry <pvince81@owncloud.com>
 *
 * This library is free software; you can redistribute it and/or
 * modify it under the terms of the GNU AFFERO GENERAL PUBLIC LICENSE
@@ -196,17 +196,20 @@ describe('OCA.Sharing.App tests', function() {
 				{
 					description: 'accepting',
 					action: 'action-accept',
-					method: 'POST'
+					method: 'POST',
+					newState: OC.Share.STATE_ACCEPTED
 				},
 				{
 					description: 'rejecting',
 					action: 'action-reject',
-					method: 'DELETE'
+					method: 'DELETE',
+					newState: OC.Share.STATE_REJECTED
 				}
 			];
 
 			_.each(actionProvider, function(spec) {
 				it('sends server request when ' + spec.description + ' a share', function() {
+					var updateRowSpy = sinon.spy(fileListIn, 'updateRow');
 					fileData.shareState = OC.Share.STATE_PENDING;
 					var $tr = fileListIn.add(fileData);
 
@@ -218,7 +221,24 @@ describe('OCA.Sharing.App tests', function() {
 					var request = fakeServer.requests[0];
 					expect(request.url).toEqual(OC.linkToOCS('apps/files_sharing/api/v1') + 'shares/pending/123?format=json');
 					expect(request.method).toEqual(spec.method);
-					request.respond(200, {'Content-Type': 'application/json'}, JSON.stringify({}));
+
+					var response = {
+						ocs: {
+							data: [{
+								state: spec.newState,
+								file_target: '/dir/testdir (2)'
+							}]
+						}
+					};
+					request.respond(200, {'Content-Type': 'application/json'}, JSON.stringify(response));
+
+					expect(updateRowSpy.calledOnce).toEqual(true);
+
+					$tr = updateRowSpy.getCall(0).returnValue;
+
+					expect(parseInt($tr.attr('data-share-state'), 10)).toEqual(spec.newState);
+					expect($tr.attr('data-file')).toEqual('testdir (2)');
+					expect($tr.attr('data-path')).toEqual('/dir');
 				});
 			});
 		});

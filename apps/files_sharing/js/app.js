@@ -183,12 +183,13 @@ OCA.Sharing.App = {
 			method = 'DELETE';
 		}
 
-		return $.ajax({
+		var xhr = $.ajax({
 			url: OC.linkToOCS('apps/files_sharing/api/v1') + 'shares/pending/' + encodeURIComponent(fileId) + '?format=json',
 			contentType: 'application/json',
 			dataType: 'json',
 			type: method,
-		}).fail(function(response) {
+		});
+		xhr.fail(function(response) {
 			var message = '';
 			// show message if it is available
 			if(response.responseJSON && response.responseJSON.message) {
@@ -196,6 +197,25 @@ OCA.Sharing.App = {
 			}
 			OC.Notification.show(t('files', 'An error occurred while updating share state: ' + message), {type: 'error'});
 		});
+		return xhr;
+	},
+
+	_shareStateActionHandler: function(context, newState) {
+		function responseCallback(response, status) {
+			if (status === 'success') {
+				var data = response.ocs.data[0];
+				context.fileInfoModel.set({
+					shareState: data.state,
+					name: OC.basename(data.file_target),
+					path: OC.dirname(data.file_target)
+				});
+			}
+			context.fileList.showFileBusyState(context.$file, false);
+		}
+
+		context.fileList.showFileBusyState(context.$file, true);
+		this._setShareState(context.fileInfoModel.get('shares')[0].id, newState)
+			.then(responseCallback);
 	},
 
 	_registerPendingShareActions: function(fileActions) {
@@ -210,12 +230,7 @@ OCA.Sharing.App = {
 			iconClass: 'icon-checkmark',
 			permissions: OC.PERMISSION_READ,
 			actionHandler: function (filename, context) {
-				context.fileList.showFileBusyState(filename, true);
-				self._setShareState(context.fileInfoModel.get('shareId'), OC.Share.STATE_ACCEPTED).then(function() {
-					context.fileList.showFileBusyState(filename, false);
-				}).done(function() {
-					context.fileInfoModel.set('shareState', OC.Share.STATE_ACCEPTED);
-				});
+				self._shareStateActionHandler(context, OC.Share.STATE_ACCEPTED);
 			}
 		});
 		fileActions.registerAction({
@@ -226,12 +241,7 @@ OCA.Sharing.App = {
 			mime: 'all',
 			permissions: OC.PERMISSION_READ,
 			actionHandler: function (filename, context) {
-				context.fileList.showFileBusyState(filename, true);
-				self._setShareState(context.fileInfoModel.get('shareId'), OC.Share.STATE_REJECTED).then(function() {
-					context.fileList.showFileBusyState(filename, false);
-				}).done(function() {
-					context.fileInfoModel.set('shareState', OC.Share.STATE_REJECTED);
-				});
+				self._shareStateActionHandler(context, OC.Share.STATE_REJECTED);
 			}
 		});
 
