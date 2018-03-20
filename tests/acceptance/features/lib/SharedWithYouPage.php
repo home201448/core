@@ -2,8 +2,8 @@
 /**
  * ownCloud
  *
- * @author Artur Neumann <artur@jankaritech.com>
- * @copyright Copyright (c) 2017 Artur Neumann artur@jankaritech.com
+ * @author Bijay Sharma/Moheet Shrestha <trainees@jankaritech.com>
+ * @copyright Copyright (c) 2017 Bijay Sharma/Moheet Shrestha trainees@jankaritech.com
  *
  * This code is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License,
@@ -22,60 +22,46 @@
 
 namespace Page;
 
-use Behat\Mink\Session;
-
 /**
- * Trashbin page.
+ * Shared with you page.
  */
-class TrashbinPage extends FilesPageBasic {
-
+class SharedWithYouPage extends FilesPageBasic {
+	
 	/**
 	 *
 	 * @var string $path
 	 */
-	protected $path = '/index.php/apps/files/?view=trashbin';
-	protected $fileNamesXpath = "//span[@class='nametext extra-data']";
-	protected $fileNameMatchXpath = "//span[@class='nametext extra-data' and .=%s]";
-	protected $fileListXpath = ".//div[@id='app-content-trashbin']//tbody[@id='fileList']";
-	protected $emptyContentXpath = ".//div[@id='app-content-trashbin']//div[@id='emptycontent']";
-
+	protected $path = '/index.php/apps/files/?view=sharingin';
+	protected $fileNamesXpath = "//span[@class='nametext']";
+	protected $fileNameMatchXpath = "//span[@class='nametext' and .=%s]";
+	protected $fileListXpath = ".//div[@id='app-content-sharingin']//tbody[@id='fileList']";
+	protected $emptyContentXpath = ".//div[@id='app-content-sharingin']//div[@id='emptycontent']";
+	
 	/**
 	 * @return string
 	 */
 	protected function getFileListXpath() {
 		return $this->fileListXpath;
 	}
-
+	
 	/**
 	 * @return string
 	 */
 	protected function getFileNamesXpath() {
 		return $this->fileNamesXpath;
 	}
-
+	
 	/**
 	 * @return string
 	 */
 	protected function getFileNameMatchXpath() {
 		return $this->fileNameMatchXpath;
 	}
-
+	
 	/**
 	 * @return string
 	 */
 	protected function getEmptyContentXpath() {
 		return $this->emptyContentXpath;
-	}
-
-	/**
-	 * 
-	 * @param string $fname
-	 * @param Session $session
-	 *
-	 * @return void
-	 */
-	public function restore($fname, Session $session) {
-		$row = $this->findFileRowByName($fname, $session);
-		$row->restore();
 	}
 }

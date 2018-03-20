@@ -404,6 +404,19 @@ class WebUIGeneralContext extends RawMinkContext implements Context {
 	}
 
 	/**
+	 * 
+	 * @When the user reloads the current page of the webUI
+	 * @Given the user has reloaded the current page of the webUI
+	 *
+	 * @return void
+	 */
+	public function theUserReloadsTheCurrentPageOfTheWebUI() {
+		$this->getSession()->reload();
+		$pageObject = $this->getCurrentPageObject();
+		$pageObject->waitTillPageIsLoaded($this->getSession());
+	}
+
+	/**
 	 * returns the saved capabilities as XML
 	 * 
 	 * @return string

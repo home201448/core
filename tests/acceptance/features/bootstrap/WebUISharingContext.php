@@ -26,6 +26,7 @@ use Behat\Gherkin\Node\TableNode;
 use Behat\MinkExtension\Context\RawMinkContext;
 use Page\FilesPage;
 use Page\PublicLinkFilesPage;
+use Page\SharedWithYouPage;
 use SensioLabs\Behat\PageObjectExtension\PageObject\Exception\ElementNotFoundException;
 use TestHelpers\AppConfigHelper;
 
@@ -36,8 +37,23 @@ require_once 'bootstrap.php';
  */
 class WebUISharingContext extends RawMinkContext implements Context {
 
+	/**
+	 * 
+	 * @var FilesPage
+	 */
 	private $filesPage;
+
+	/**
+	 * 
+	 * @var PublicLinkFilesPage
+	 */
 	private $publicLinkFilesPage;
+
+	/**
+	 *
+	 * @var SharedWithYouPage
+	 */
+	private $sharedWithYouPage;
 	private $sharingDialog;
 
 	/**
@@ -66,10 +82,13 @@ class WebUISharingContext extends RawMinkContext implements Context {
 	 * @param PublicLinkFilesPage $publicLinkFilesPage
 	 */
 	public function __construct(
-		FilesPage $filesPage, PublicLinkFilesPage $publicLinkFilesPage
+		FilesPage $filesPage,
+		PublicLinkFilesPage $publicLinkFilesPage,
+		SharedWithYouPage $sharedWithYouPage
 	) {
 		$this->filesPage = $filesPage;
 		$this->publicLinkFilesPage = $publicLinkFilesPage;
+		$this->sharedWithYouPage = $sharedWithYouPage;
 	}
 
 	/**
@@ -336,6 +355,29 @@ class WebUISharingContext extends RawMinkContext implements Context {
 	}
 
 	/**
+	 * @When /^the user (declines|accepts) the share "([^"]*)" offered by user "([^"]*)" using the webUI$/
+	 *
+	 * @param string $action
+	 * @param string $share
+	 * @param string $offeredBy
+	 *
+	 * @return void
+	 */
+	public function userReactsToShareOfferedByUsingWebUI(
+		$action, $share, $offeredBy
+	) {
+		$this->webUIFilesContext->theUserBrowsesToTheSharedWithYouPage();
+		//TODO find row by user who offered the share
+		$fileRow = $this->sharedWithYouPage->findFileRowByName(
+			$share, $this->getSession()
+		);
+		if ($action === "accepts") {
+			$fileRow->acceptShare($this->getSession());
+		} else {
+			$fileRow->declineShare($this->getSession());
+		}
+	}
+	/**
 	 * @Then all users and groups that contain the string :requiredString in their name should be listed in the autocomplete list on the webUI
 	 *
 	 * @param string $requiredString
@@ -479,6 +521,65 @@ class WebUISharingContext extends RawMinkContext implements Context {
 		}
 	}
 
+	/**
+	 * @Then the file/folder :item should be in state :state in the shared-with-you page on the webUI
+	 * 
+	 * @param string $item
+	 * @param string $state
+	 * 
+	 * @return void
+	 */
+	public function assertShareIsInStateOnWebUI($item, $state) {
+		$this->webUIFilesContext->theUserBrowsesToTheSharedWithYouPage();
+		$fileRow = $this->sharedWithYouPage->findFileRowByName(
+			$item, $this->getSession()
+		);
+		PHPUnit_Framework_Assert::assertSame($state, $fileRow->getShareState());
+	}
+
+	/**
+	 * @Then the file/folder :item shared by :sharedBy should be in state :state in the shared-with-you page on the webUI
+	 *
+	 * @param string $item
+	 * @param string $sharedBy
+	 * @param string $state
+	 *
+	 * @return void
+	 */
+	public function assertShareSharedByIsInStateOnWebUI($item, $sharedBy, $state) {
+		$this->webUIFilesContext->theUserBrowsesToTheSharedWithYouPage();
+		$fileRows = $this->sharedWithYouPage->findAllFileRowsByName(
+			$item, $this->getSession()
+		);
+		$found = false;
+		$currentState = null;
+		foreach ($fileRows as $fileRow) {
+			if ($sharedBy === $fileRow->getSharer()) {
+				$found = true;
+				$currentState = $fileRow->getShareState();
+				break;
+			}
+		}
+		PHPUnit_Framework_Assert::assertTrue(
+			$found, "could not find item called $item shared by $sharedBy"
+		);
+		PHPUnit_Framework_Assert::assertSame($state, $currentState);
+	}
+
+	/**
+	 * @Then the file/folder :item should be in state :state in the shared-with-you page on the webUI after a page reload
+	 *
+	 * @param string $item
+	 * @param string $state
+	 *
+	 * @return void
+	 */
+	public function assertSharesIsInStateOnWebUIAfterPageReload($item, $state) {
+		$this->webUIGeneralContext->theUserReloadsTheCurrentPageOfTheWebUI();
+		$this->sharedWithYouPage->waitForAjaxCallsToStartAndFinish($this->getSession());
+		$this->assertShareIsInStateOnWebUI($item, $state);
+	}
+	
 	/**
 	 * @Then /^it should not be possible to share the (?:file|folder) "([^"]*)"(?: with "([^"]*)")? using the webUI$/
 	 *
