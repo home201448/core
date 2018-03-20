@@ -284,7 +284,7 @@
 
 		elementToFile: function($el) {
 			var fileInfo = OCA.Files.FileList.prototype.elementToFile.apply(this, arguments);
-			var shareIds = JSON.parse($el.attr('data-share-id'));
+			var shareIds = ($el.attr('data-share-id') || '').split(',');
 			if (_.isArray(shareIds)) {
 				fileInfo.shares = _.map(shareIds, function(id) {
 					return {id: id};

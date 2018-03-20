@@ -898,38 +898,44 @@ class Share20OCS {
 			return new \OC\OCS\Result(null, 404, $this->l->t('Wrong share ID, share doesn\'t exist'));
 		}
 
-		$share->getNode()->lock(\OCP\Lock\ILockingProvider::LOCK_SHARED);
+		$node = $share->getNode();
+		$node->lock(\OCP\Lock\ILockingProvider::LOCK_SHARED);
 
 		// this checks that we are either the owner or recipient
 		if (!$this->canAccessShare($share)) {
-			$share->getNode()->unlock(ILockingProvider::LOCK_SHARED);
+			$node->unlock(ILockingProvider::LOCK_SHARED);
 			return new \OC\OCS\Result(null, 404, $this->l->t('Wrong share ID, share doesn\'t exist'));
 		}
 
 		// only recipient can accept/reject share
 		if ($share->getShareOwner() === $this->currentUser->getUID() ||
 			$share->getSharedBy() === $this->currentUser->getUID()) {
-			$share->getNode()->unlock(ILockingProvider::LOCK_SHARED);
+			$node->unlock(ILockingProvider::LOCK_SHARED);
 			return new \OC\OCS\Result(null, 403, $this->l->t('Only recipient can change accepted state'));
 		}
 
+		// we actually want to update all shares related to the node in case there are multiple
+		// incoming shares for the same node (ex: receiving simultaneously through group share and user share)
+		$allShares = $this->shareManager->getSharedWith($this->currentUser->getUID(), \OCP\Share::SHARE_TYPE_USER, $node, -1, 0);
+		$allShares = array_merge($allShares, $this->shareManager->getSharedWith($this->currentUser->getUID(), \OCP\Share::SHARE_TYPE_GROUP, $node, -1, 0));
+
 		try {
-			$share->setState($state);
-			$this->shareManager->updateShareForRecipient($share, $this->currentUser->getUID());
+			foreach ($allShares as $share) {
+				$share->setState($state);
+				$this->shareManager->updateShareForRecipient($share, $this->currentUser->getUID());
+			}
 		} catch (\Exception $e) {
 			$share->getNode()->unlock(ILockingProvider::LOCK_SHARED);
 			return new \OC\OCS\Result(null, 400, $e->getMessage());
 		}
 
-		$share->getNode()->unlock(\OCP\Lock\ILockingProvider::LOCK_SHARED);
+		$node->unlock(\OCP\Lock\ILockingProvider::LOCK_SHARED);
 
 		// FIXME: needs public API!
 		\OC\Files\Filesystem::tearDown();
 		// FIXME: trigger mount for user which will also update oc_share.file_target before
 		// it is queries by the manager
 		$this->rootFolder->getUserFolder($this->currentUser->getUID());
-
-		// FIXME: path / file_target doesn't correctly update
 
 		try {
 			// re-fetch the share with updated values
