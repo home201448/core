@@ -283,6 +283,8 @@
 				files = files.concat(this._makeFilesFromRemoteShares(remoteShares[0].ocs.data));
 			}
 
+			files = files.sort(this._sortComparator);
+
 			this.setFiles(files);
 			return true;
 		},
@@ -303,7 +305,6 @@
 		},
 
 		_makeFilesFromRemoteShares: function(data) {
-			var self = this;
 			var files = data;
 
 			files = _.chain(files)
@@ -463,8 +464,7 @@
 				// Finish the chain by getting the result
 				.value();
 
-			// Sort by expected sort comparator
-			return files.sort(this._sortComparator);
+			return files;
 		}
 	});
 
