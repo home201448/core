@@ -164,26 +164,6 @@ describe('OCA.Sharing.FileList tests', function() {
 			expect($rows.length).toEqual(2);
 
 			var $tr = $rows.eq(0);
-			expect($tr.attr('data-id')).toEqual('49');
-			expect($tr.attr('data-type')).toEqual('file');
-			expect($tr.attr('data-file')).toEqual('local name.txt');
-			expect($tr.attr('data-path')).toEqual('/local path');
-			expect($tr.attr('data-size')).not.toBeDefined();
-			expect($tr.attr('data-permissions')).toEqual('31'); // read and delete
-			expect($tr.attr('data-mime')).toEqual('text/plain');
-			expect($tr.attr('data-mtime')).toEqual('11111000');
-			expect($tr.attr('data-share-owner')).toEqual('User Two');
-			expect($tr.attr('data-share-id')).toEqual('7');
-			expect($tr.attr('data-share-state')).toEqual('' + OC.Share.STATE_ACCEPTED);
-			expect($tr.attr('data-favorite')).toEqual('true');
-			expect($tr.attr('data-tags')).toEqual(OC.TAG_FAVORITE);
-			expect($tr.find('a.name').attr('href')).toEqual(
-				OC.webroot +
-				'/remote.php/webdav/local%20path/local%20name.txt'
-			);
-			expect($tr.find('.nametext').text().trim()).toEqual('local name.txt');
-
-			$tr = $rows.eq(1);
 			expect($tr.attr('data-id')).toEqual('1337');
 			expect($tr.attr('data-type')).toEqual('file');
 			expect($tr.attr('data-file')).toEqual('b.txt');
@@ -203,6 +183,26 @@ describe('OCA.Sharing.FileList tests', function() {
 				'/remote.php/webdav/b.txt'
 			);
 			expect($tr.find('.nametext').text().trim()).toEqual('b.txt');
+
+			$tr = $rows.eq(1);
+			expect($tr.attr('data-id')).toEqual('49');
+			expect($tr.attr('data-type')).toEqual('file');
+			expect($tr.attr('data-file')).toEqual('local name.txt');
+			expect($tr.attr('data-path')).toEqual('/local path');
+			expect($tr.attr('data-size')).not.toBeDefined();
+			expect($tr.attr('data-permissions')).toEqual('31'); // read and delete
+			expect($tr.attr('data-mime')).toEqual('text/plain');
+			expect($tr.attr('data-mtime')).toEqual('11111000');
+			expect($tr.attr('data-share-owner')).toEqual('User Two');
+			expect($tr.attr('data-share-id')).toEqual('7');
+			expect($tr.attr('data-share-state')).toEqual('' + OC.Share.STATE_ACCEPTED);
+			expect($tr.attr('data-favorite')).toEqual('true');
+			expect($tr.attr('data-tags')).toEqual(OC.TAG_FAVORITE);
+			expect($tr.find('a.name').attr('href')).toEqual(
+				OC.webroot +
+				'/remote.php/webdav/local%20path/local%20name.txt'
+			);
+			expect($tr.find('.nametext').text().trim()).toEqual('local name.txt');
 		});
 		it('render folder shares', function() {
 			/* jshint camelcase: false */
@@ -244,26 +244,6 @@ describe('OCA.Sharing.FileList tests', function() {
 			expect($rows.length).toEqual(2);
 
 			var $tr = $rows.eq(0);
-			expect($tr.attr('data-id')).toEqual('49');
-			expect($tr.attr('data-type')).toEqual('dir');
-			expect($tr.attr('data-file')).toEqual('local name');
-			expect($tr.attr('data-path')).toEqual('/local path');
-			expect($tr.attr('data-size')).not.toBeDefined();
-			expect($tr.attr('data-permissions')).toEqual('31'); // read and delete
-			expect($tr.attr('data-mime')).toEqual('httpd/unix-directory');
-			expect($tr.attr('data-mtime')).toEqual('11111000');
-			expect($tr.attr('data-share-owner')).toEqual('User Two');
-			expect($tr.attr('data-share-id')).toEqual('7');
-			expect($tr.attr('data-favorite')).toEqual('true');
-			expect($tr.attr('data-tags')).toEqual(OC.TAG_FAVORITE);
-			expect($tr.find('a.name').attr('href')).toEqual(
-				OC.webroot +
-				'/index.php/apps/files' +
-				'?dir=/local%20path/local%20name'
-			);
-			expect($tr.find('.nametext').text().trim()).toEqual('local name');
-
-			$tr = $rows.eq(1);
 			expect($tr.attr('data-id')).toEqual('1337');
 			expect($tr.attr('data-type')).toEqual('dir');
 			expect($tr.attr('data-file')).toEqual('b');
@@ -284,7 +264,25 @@ describe('OCA.Sharing.FileList tests', function() {
 			);
 			expect($tr.find('.nametext').text().trim()).toEqual('b');
 
-
+			$tr = $rows.eq(1);
+			expect($tr.attr('data-id')).toEqual('49');
+			expect($tr.attr('data-type')).toEqual('dir');
+			expect($tr.attr('data-file')).toEqual('local name');
+			expect($tr.attr('data-path')).toEqual('/local path');
+			expect($tr.attr('data-size')).not.toBeDefined();
+			expect($tr.attr('data-permissions')).toEqual('31'); // read and delete
+			expect($tr.attr('data-mime')).toEqual('httpd/unix-directory');
+			expect($tr.attr('data-mtime')).toEqual('11111000');
+			expect($tr.attr('data-share-owner')).toEqual('User Two');
+			expect($tr.attr('data-share-id')).toEqual('7');
+			expect($tr.attr('data-favorite')).toEqual('true');
+			expect($tr.attr('data-tags')).toEqual(OC.TAG_FAVORITE);
+			expect($tr.find('a.name').attr('href')).toEqual(
+				OC.webroot +
+				'/index.php/apps/files' +
+				'?dir=/local%20path/local%20name'
+			);
+			expect($tr.find('.nametext').text().trim()).toEqual('local name');
 		});
 		it('groups link shares with regular shares when based on same file', function() {
 			/* jshint camelcase: false */
