@@ -923,7 +923,22 @@ class Share20OCS {
 
 		$share->getNode()->unlock(\OCP\Lock\ILockingProvider::LOCK_SHARED);
 
-		return new \OC\OCS\Result([$this->formatShare($share)]);
+		// FIXME: needs public API!
+		\OC\Files\Filesystem::tearDown();
+		// FIXME: trigger mount for user which will also update oc_share.file_target before
+		// it is queries by the manager
+		$this->rootFolder->getUserFolder($this->currentUser->getUID());
+
+		// FIXME: path / file_target doesn't correctly update
+
+		try {
+			// re-fetch the share with updated values
+			$share = $this->getShareById($id, $this->currentUser->getUID());
+		} catch (ShareNotFound $e) {
+			return new \OC\OCS\Result(null, 404, $this->l->t('Wrong share ID, share doesn\'t exist'));
+		}
+
+		return new \OC\OCS\Result([$this->formatShare($share, true)]);
 	}
 
 	/**

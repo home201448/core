@@ -284,7 +284,15 @@
 
 		elementToFile: function($el) {
 			var fileInfo = OCA.Files.FileList.prototype.elementToFile.apply(this, arguments);
-			fileInfo.shareId = $el.attr('data-share-id');
+			var shareIds = JSON.parse($el.attr('data-share-id'));
+			if (_.isArray(shareIds)) {
+				fileInfo.shares = _.map(shareIds, function(id) {
+					return {id: id};
+				});
+			} else {
+				fileInfo.shares = [{id: shareIds}];
+			}
+
 			fileInfo.shareState = parseInt($el.attr('data-share-state'), 10);
 			return fileInfo;
 		},
