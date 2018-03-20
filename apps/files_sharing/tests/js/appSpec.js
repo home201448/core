@@ -129,7 +129,8 @@ describe('OCA.Sharing.App tests', function() {
 				type: 'dir',
 				path: '/somewhere/inside/subdir',
 				counterParts: ['user2'],
-				shareOwner: 'user2'
+				shareOwner: 'user2',
+				shareState: OC.Share.STATE_ACCEPTED
 			}]);
 
 			fileListIn.findFileEl('testdir').find('td .nametext').click();

@@ -149,6 +149,11 @@
 				);
 				$tr.addClass(shareStateClass);
 				$dateColumn.before(td);
+
+				if (fileData.shareState !== OC.Share.STATE_ACCEPTED) {
+					// remove link
+					$tr.find('a.name').attr('href', '#').addClass('disable-click');
+				}
 			}
 
 			return $tr;
@@ -306,6 +311,7 @@
 				.map(function(share) {
 					var file = {
 						shareOwner: share.owner + '@' + share.remote.replace(/.*?:\/\//g, ""),
+						shareState: share.accepted ? OC.Share.STATE_ACCEPTED : OC.Share.STATE_PENDING,
 						name: OC.basename(share.mountpoint),
 						mtime: share.mtime * 1000,
 						mimetype: share.mimetype,
@@ -366,7 +372,7 @@
 						type: share.share_type,
 						target: share.share_with,
 						stime: share.stime * 1000,
-						expiration: share.expiration,
+						expiration: share.expiration
 					};
 					if (self._sharedWithUser) {
 						file.shareOwner = share.displayname_owner;

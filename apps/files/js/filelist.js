@@ -614,6 +614,11 @@
 		 * Event handler for when clicking on files to select them
 		 */
 		_onClickFile: function(event) {
+			var $link = $(event.target).closest('a');
+			if ($link.attr('href') === '#' || $link.hasClass('disable-click')) {
+				event.preventDefault();
+				return;
+			}
 			var $tr = $(event.target).closest('tr');
 			if ($tr.hasClass('dragging')) {
 				return;
