@@ -375,6 +375,9 @@
 			this.fileActions.off('setDefault', this._onFileActionsUpdated);
 			OC.Plugins.detach('OCA.Files.FileList', this);
 			$('#app-content').off('appresized', this._onResize);
+			// HACK: this will make reload work when reused
+			this.$el.find('#dir').val('');
+			this.$fileList.empty();
 		},
 
 		/**
