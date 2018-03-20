@@ -54,6 +54,10 @@ class FileRow extends OwncloudPage {
 	protected $restoreLinkXpath = '//a[@data-action="Restore"]';
 	protected $notMarkedFavoriteXpath = "//span[contains(@class,'icon-star')]";
 	protected $markedFavoriteXpath = "//span[contains(@class,'icon-starred')]";
+	protected $shareStateXpath = "//span[@class='state']";
+	protected $sharerXpath = "//a[@data-action='Share']";
+	protected $acceptShareBtnXpath = "//span[@class='fileactions']//a[contains(@class,'accept')]";
+	protected $declinePendingShareBtnXpath = "//a[@data-action='Reject']";
 
 	/**
 	 * 
@@ -369,5 +373,82 @@ class FileRow extends OwncloudPage {
 			);
 		}
 		$element->click();
+	}
+
+	/**
+	 * returns the share state (only works on the "Shared with you" page)
+	 * 
+	 * @throws ElementNotFoundException
+	 * 
+	 * @return string
+	 */
+	public function getShareState() {
+		$element = $this->rowElement->find("xpath", $this->shareStateXpath);
+		if (is_null($element)) {
+			throw new ElementNotFoundException(
+				__METHOD__ .
+				" sharing state element with xpath $this->shareStateXpath not found"
+			);
+		}
+		return $element->getText();
+	}
+
+	/**
+	 * 
+	 * @throws ElementNotFoundException
+	 * 
+	 * @return string
+	 */
+	public function getSharer() {
+		$element = $this->rowElement->find("xpath", $this->sharerXpath);
+		if (is_null($element)) {
+			throw new ElementNotFoundException(
+				__METHOD__ .
+				" sharer element with xpath $this->sharerXpath not found"
+			);
+		}
+		return trim($element->getText());
+	}
+	/**
+	 *
+	 * @param Session $session
+	 * 
+	 * @return void
+	 */
+	public function acceptShare($session) {
+		$element = $this->rowElement->find("xpath", $this->acceptShareBtnXpath);
+		if (is_null($element)) {
+			throw new ElementNotFoundException(
+				__METHOD__ .
+				" accept share button with xpath" .
+				" $this->acceptShareBtnXpath not found"
+			);
+		}
+		$element->click();
+		$this->waitForAjaxCallsToStartAndFinish($session);
+	}
+
+	/**
+	 *
+	 * @param Session $session
+	 * 
+	 * @return void
+	 */
+	public function declineShare($session) {
+		//TODO decline already accepted share
+		$element = $this->rowElement->find("xpath", $this->declinePendingShareBtnXpath);
+		if (is_null($element)) {
+			$this->openFileActionsMenu($session);
+			$element = $this->rowElement->find("xpath", $this->declinePendingShareBtnXpath);
+		}
+		if (is_null($element)) {
+			throw new ElementNotFoundException(
+				__METHOD__ .
+				" decline share button with xpath" .
+				" $this->declinePendingShareBtnXpath not found"
+			);
+		}
+		$element->click();
+		$this->waitForAjaxCallsToStartAndFinish($session);
 	}
 }

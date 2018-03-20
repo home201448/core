@@ -23,19 +23,19 @@
 namespace Page;
 
 /**
- * Favorites page.
+ * Shared with you page.
  */
-class FavoritesPage extends FilesPageBasic {
+class SharedWithYouPage extends FilesPageBasic {
 	
 	/**
 	 *
 	 * @var string $path
 	 */
-	protected $path = '/index.php/apps/files/?view=favorites';
+	protected $path = '/index.php/apps/files/?view=sharingin';
 	protected $fileNamesXpath = "//span[@class='nametext']";
 	protected $fileNameMatchXpath = "//span[@class='nametext' and .=%s]";
-	protected $fileListXpath = ".//div[@id='app-content-favorites']//tbody[@id='fileList']";
-	protected $emptyContentXpath = ".//div[@id='app-content-favorites']//div[@id='emptycontent']";
+	protected $fileListXpath = ".//div[@id='app-content-sharingin']//tbody[@id='fileList']";
+	protected $emptyContentXpath = ".//div[@id='app-content-sharingin']//div[@id='emptycontent']";
 	
 	/**
 	 * @return string

@@ -36,8 +36,8 @@ class TrashbinPage extends FilesPageBasic {
 	 * @var string $path
 	 */
 	protected $path = '/index.php/apps/files/?view=trashbin';
-	protected $fileNamesXpath = "//span[contains(@class,'nametext')]";
-	protected $fileNameMatchXpath = "//span[contains(@class,'nametext') and .=%s]";
+	protected $fileNamesXpath = "//span[@class='nametext extra-data']";
+	protected $fileNameMatchXpath = "//span[@class='nametext extra-data' and .=%s]";
 	protected $fileListXpath = ".//div[@id='app-content-trashbin']//tbody[@id='fileList']";
 	protected $emptyContentXpath = ".//div[@id='app-content-trashbin']//div[@id='emptycontent']";
 	protected $deleteAllSelectedBtnXpath = ".//*[@id='app-content-trashbin']//*[@class='delete-selected']";

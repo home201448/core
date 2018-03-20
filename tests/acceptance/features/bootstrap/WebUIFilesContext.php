@@ -33,6 +33,7 @@ use Page\TrashbinPage;
 use SensioLabs\Behat\PageObjectExtension\PageObject\Exception\ElementNotFoundException;
 use TestHelpers\DeleteHelper;
 use TestHelpers\DownloadHelper;
+use Page\SharedWithYouPage;
 use Page\FilesPageElement\FileRow;
 
 require_once 'bootstrap.php';
@@ -42,9 +43,30 @@ require_once 'bootstrap.php';
  */
 class WebUIFilesContext extends RawMinkContext implements Context {
 
+	/**
+	 * 
+	 * @var FilesPage
+	 */
 	private $filesPage;
+	
+	/**
+	 * 
+	 * @var TrashbinPage
+	 */
 	private $trashbinPage;
+	
+	/**
+	 * 
+	 * @var FavoritesPage
+	 */
 	private $favoritesPage;
+	
+	/**
+	 * 
+	 * @var SharedWithYouPage
+	 */
+	private $sharedWithYouPage;
+	
 	/**
 	 * 
 	 * @var ConflictDialog
@@ -103,13 +125,14 @@ class WebUIFilesContext extends RawMinkContext implements Context {
 		FilesPage $filesPage,
 		TrashbinPage $trashbinPage,
 		ConflictDialog $conflictDialog,
-		FavoritesPage $favoritesPage
+		FavoritesPage $favoritesPage,
+		SharedWithYouPage $sharedWithYouPage
 	) {
 		$this->trashbinPage = $trashbinPage;
 		$this->filesPage = $filesPage;
 		$this->conflictDialog = $conflictDialog;
 		$this->favoritesPage = $favoritesPage;
-		
+		$this->sharedWithYouPage = $sharedWithYouPage;
 	}
 
 	/**
@@ -177,6 +200,20 @@ class WebUIFilesContext extends RawMinkContext implements Context {
 			$this->favoritesPage->open();
 			$this->favoritesPage->waitTillPageIsLoaded($this->getSession());
 			$this->webUIGeneralContext->setCurrentPageObject($this->favoritesPage);
+		}
+	}
+
+	/**
+	 * @When the user browses to the shared-with-you page
+	 * @Given the user has browsed to the shared-with-you page
+	 *
+	 * @return void
+	 */
+	public function theUserBrowsesToTheSharedWithYouPage() {
+		if (!$this->sharedWithYouPage->isOpen()) {
+			$this->sharedWithYouPage->open();
+			$this->sharedWithYouPage->waitTillPageIsLoaded($this->getSession());
+			$this->webUIGeneralContext->setCurrentPageObject($this->sharedWithYouPage);
 		}
 	}
 
@@ -849,6 +886,7 @@ class WebUIFilesContext extends RawMinkContext implements Context {
 	}
 	
 	/**
+<<<<<<< HEAD
 	 * @Then /^the folder should (not|)\s?be empty on the webUI$/
 	 *
 	 * @param string $shouldOrNot
@@ -887,6 +925,9 @@ class WebUIFilesContext extends RawMinkContext implements Context {
 
 	/**
 	 * @Then /^the (?:file|folder) ((?:'[^']*')|(?:"[^"]*")) should (not|)\s?be listed\s?(?:in the |)(trashbin|favorites page|files page|)\s?(?:folder ((?:'[^']*')|(?:"[^"]*")))? on the webUI$/
+=======
+	 * @Then /^the (?:file|folder) ((?:'[^']*')|(?:"[^"]*")) should (not|)\s?be listed\s?(?:in the |)(all-files page|trashbin|favorites page|shared-with-you page|)\s?(?:folder ((?:'[^']*')|(?:"[^"]*")))? on the webUI$/
+>>>>>>> UI tests
 	 *
 	 * @param string $name enclosed in single or double quotes
 	 * @param string $shouldOrNot
@@ -925,11 +966,19 @@ class WebUIFilesContext extends RawMinkContext implements Context {
 	) {
 		$should = ($shouldOrNot !== "not");
 		$exceptionMessage = null;
-		if ($typeOfFilesPage === "trashbin") {
-			$this->theUserBrowsesToTheTrashbinPage();
-		}
-		if ($typeOfFilesPage === "favorites page") {
-			$this->theUserBrowsesToTheFavoritesPage();
+		switch ($typeOfFilesPage) {
+			case "all-files page":
+				$this->theUserBrowsesToTheFilesPage();
+				break;
+			case "trashbin":
+				$this->theUserBrowsesToTheTrashbinPage();
+				break;
+			case "favorites page":
+				$this->theUserBrowsesToTheFavoritesPage();
+				break;
+			case "shared-with-you page":
+				$this->theUserBrowsesToTheSharedWithYouPage();
+				break;
 		}
 		if ($typeOfFilesPage === "files page") {
 			$this->theUserBrowsesToTheFilesPage();
@@ -1042,7 +1091,7 @@ class WebUIFilesContext extends RawMinkContext implements Context {
 	}
 
 	/**
-	 * @Then /^the following (?:file|folder) should (not|)\s?be listed\s?(?:in the |)(trashbin|favorites page|)\s?(?:folder ((?:'[^']*')|(?:"[^"]*")))? on the webUI$/
+	 * @Then /^the following (?:file|folder) should (not|)\s?be listed\s?(?:in the |)(trashbin|favorites page|shared-with-you page|)\s?(?:folder ((?:'[^']*')|(?:"[^"]*")))? on the webUI$/
 	 *
 	 * @param string $shouldOrNot
 	 * @param string $typeOfFilesPage
