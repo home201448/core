@@ -97,19 +97,22 @@ OCA.Sharing.App = {
 
 	removeSharingIn: function() {
 		if (this._inFileList) {
-			this._inFileList.$fileList.empty();
+			this._inFileList.destroy();
+			this._inFileList = null;
 		}
 	},
 
 	removeSharingOut: function() {
 		if (this._outFileList) {
-			this._outFileList.$fileList.empty();
+			this._outFileList.destroy();
+			this._outFileList = null;
 		}
 	},
 
 	removeSharingLinks: function() {
 		if (this._linkFileList) {
-			this._linkFileList.$fileList.empty();
+			this._linkFileList.destroy();
+			this._linkFileList = null;
 		}
 	},
 
