@@ -195,7 +195,7 @@ OCA.Sharing.App = {
 			if(response.responseJSON && response.responseJSON.message) {
 				message = ': ' + response.responseJSON.message;
 			}
-			OC.Notification.show(t('files', 'An error occurred while updating share state: ' + message), {type: 'error'});
+			OC.Notification.show(t('files', 'An error occurred while updating share state: {message}', {message:  message}), {type: 'error'});
 		});
 		return xhr;
 	},
@@ -204,11 +204,16 @@ OCA.Sharing.App = {
 		function responseCallback(response, status) {
 			if (status === 'success') {
 				var data = response.ocs.data[0];
-				context.fileInfoModel.set({
-					shareState: data.state,
-					name: OC.basename(data.file_target),
-					path: OC.dirname(data.file_target)
-				});
+				var meta = response.ocs.meta;
+				if (meta.status === 'ok') {
+					context.fileInfoModel.set({
+						shareState: data.state,
+						name: OC.basename(data.file_target),
+						path: OC.dirname(data.file_target)
+					});
+				} else {
+					OC.Notification.show(t('files', 'An error occurred while updating share state: {message}', {message: meta.message}), {type: 'error'});
+				}
 			}
 			context.fileList.showFileBusyState(context.$file, false);
 		}

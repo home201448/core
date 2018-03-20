@@ -227,7 +227,10 @@ describe('OCA.Sharing.App tests', function() {
 							data: [{
 								state: spec.newState,
 								file_target: '/dir/testdir (2)'
-							}]
+							}],
+							meta: {
+								status: 'ok'
+							}
 						}
 					};
 					request.respond(200, {'Content-Type': 'application/json'}, JSON.stringify(response));
@@ -240,6 +243,34 @@ describe('OCA.Sharing.App tests', function() {
 					expect($tr.attr('data-file')).toEqual('testdir (2)');
 					expect($tr.attr('data-path')).toEqual('/dir');
 				});
+
+			});
+
+			it('shows error when one occurs during share state update', function() {
+				var notificationStub = sinon.stub(OC.Notification, 'show');
+				fileData.shareState = OC.Share.STATE_PENDING;
+				var $tr = fileListIn.add(fileData);
+
+				$tr.find('.fileactions .action-accept').click();
+
+				expect(fakeServer.requests.length).toEqual(1);
+				var request = fakeServer.requests[0];
+
+				var response = {
+					ocs: {
+						data: [],
+						meta: {
+							status: 'failure',
+							message: 'test error'
+						}
+					}
+				};
+				request.respond(200, {'Content-Type': 'application/json'}, JSON.stringify(response));
+
+				expect(notificationStub.calledOnce).toEqual(true);
+				expect(notificationStub.getCall(0).args[0]).toContain('test error');
+
+				notificationStub.restore();
 			});
 		});
 	});
