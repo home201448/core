@@ -2118,7 +2118,7 @@ class Share20OCSTest extends TestCase {
 
 		$this->shareManager->method('getShareById')->with('ocinternal:42')->willReturn($share);
 
-		$this->shareManager->expects($this->any(0))
+		$this->shareManager->expects($this->any())
 			->method('getSharedWith')
 			->will($this->returnValueMap([
 				['currentUser', Share::SHARE_TYPE_USER, $share->getNode(), -1, 0, []],
@@ -3166,13 +3166,20 @@ class Share20OCSTest extends TestCase {
 		$refetchedUserShare->setState($expectedState);
 		$refetchedUserShare->setNode($userShare->getNode());
 
-		$this->shareManager->expects($this->any())
+		$this->shareManager->expects($this->exactly(2))
 			->method('getShareById')
 			->with('ocinternal:123', 'currentUser')
 			->will($this->onConsecutiveCalls(
 				$userShare,
 				$refetchedUserShare
 			));
+
+		$this->shareManager->expects($this->exactly(2))
+			->method('getSharedWith')
+			->will($this->returnValueMap([
+				['currentUser', Share::SHARE_TYPE_USER, $userShare->getNode(), -1, 0, [$userShare]],
+				['currentUser', Share::SHARE_TYPE_GROUP, $userShare->getNode(), -1, 0, []]
+			]));
 
 		$this->shareManager->expects($this->once())
 			->method('updateShareForRecipient')
@@ -3182,6 +3189,49 @@ class Share20OCSTest extends TestCase {
 		$ocs->method('formatShare')->will($this->returnArgument(0));
 		$result = $ocs->$method(123);
 
+		$this->assertEquals(100, $result->getStatusCode());
+		$this->assertEquals($refetchedUserShare, $result->getData()[0], 'result contains updated user share');
+	}
+
+	/**
+	 * @dataProvider providesAcceptRejectShare
+	 */
+	public function testAcceptRejectShareMultiple($method, $expectedState) {
+		$userShare = $this->makeReceivedUserShareForOperation();
+		$groupShare = $this->newShare();
+		$groupShare->setId(234);
+		$groupShare->setShareType(Share::SHARE_TYPE_GROUP);
+		$groupShare->setSharedWith('group1');
+		$groupShare->setNode($userShare->getNode());
+
+		$refetchedUserShare = $this->newShare();
+		$refetchedUserShare->setState($expectedState);
+		$refetchedUserShare->setNode($userShare->getNode());
+
+		$this->shareManager->expects($this->exactly(2))
+			->method('getShareById')
+			->with('ocinternal:123', 'currentUser')
+			->will($this->onConsecutiveCalls(
+				$userShare,
+				$refetchedUserShare
+			));
+
+		$this->shareManager->expects($this->exactly(2))
+			->method('getSharedWith')
+			->will($this->returnValueMap([
+				['currentUser', Share::SHARE_TYPE_USER, $userShare->getNode(), -1, 0, [$userShare]],
+				['currentUser', Share::SHARE_TYPE_GROUP, $userShare->getNode(), -1, 0, [$groupShare]]
+			]));
+
+		$this->shareManager->expects($this->exactly(2))
+			->method('updateShareForRecipient')
+			->withConsecutive($userShare, $groupShare);
+
+		$ocs = $this->mockFormatShare();
+		$ocs->method('formatShare')->will($this->returnArgument(0));
+		$result = $ocs->$method(123);
+
+		$this->assertEquals(100, $result->getStatusCode());
 		$this->assertEquals($refetchedUserShare, $result->getData()[0], 'result contains updated user share');
 	}
 
@@ -3298,6 +3348,14 @@ class Share20OCSTest extends TestCase {
 		$this->shareManager->expects($this->once())
 			->method('updateShareForRecipient')
 			->will($this->throwException(new \Exception('operation error')));
+
+		$this->shareManager->expects($this->exactly(2))
+			->method('getSharedWith')
+			->will($this->returnValueMap([
+				['currentUser', Share::SHARE_TYPE_USER, $userShare->getNode(), -1, 0, [$userShare]],
+				['currentUser', Share::SHARE_TYPE_GROUP, $userShare->getNode(), -1, 0, []]
+			]));
+
 
 		$expected = new \OC\OCS\Result(null, 400, 'operation error');
 		$result = $this->ocs->$method(123);

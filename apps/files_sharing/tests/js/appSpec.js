@@ -152,7 +152,7 @@ describe('OCA.Sharing.App tests', function() {
 				showMenuStub = sinon.stub(OC, 'showMenu');
 				fileData = {
 					id: '111',
-					shares: [{id: '123'}],
+					shares: [{id: '123'}, {id: '234'}],
 					name: 'testdir',
 					type: 'dir',
 					path: '/somewhere/inside/subdir',
