@@ -121,7 +121,7 @@ So that ....
 		And the user re-logs in with username "user1" and password "1234" using the webUI
 		When the user accepts the share "simple-folder" offered by user "User Two" using the webUI
 		And the user reloads the current page of the webUI
-		Then the folder "simple-folder (2)" should be in state "Accepted" in the shared-with-you page on the webUI
+		Then the folder "simple-folder (2)" should be in state "" in the shared-with-you page on the webUI
 		And the folder "simple-folder (2)" should be listed in the all-files page on the webUI
 
 	Scenario: reject a share that you received as user and as group member
