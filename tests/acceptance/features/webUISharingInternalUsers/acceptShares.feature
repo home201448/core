@@ -37,6 +37,29 @@ So that ....
 		Then the folder "simple-folder" shared by "User One" should be in state "Pending" in the shared-with-you page on the webUI
 		And the folder "simple-folder" shared by "User Two" should be in state "Pending" in the shared-with-you page on the webUI
 
+	Scenario: receive shares with same name from different users, accept one by one
+		Given the setting "Automatically accept new incoming local user shares" in the section "Sharing" has been disabled
+		And user "user2" has created a folder "/simple-folder/from_user2"
+		And user "user2" has shared folder "/simple-folder" with user "user3"
+		And user "user1" has created a folder "/simple-folder/from_user1"
+		And user "user1" has shared folder "/simple-folder" with user "user3"
+		And the user has logged in with username "user3" and password "1234" using the webUI
+		When the user accepts the share "simple-folder" offered by user "User One" using the webUI
+		And the user accepts the share "simple-folder" offered by user "User Two" using the webUI
+		Then the folder "simple-folder (2)" shared by "User One" should be in state "" in the shared-with-you page on the webUI
+		And the folder "simple-folder (3)" shared by "User Two" should be in state "" in the shared-with-you page on the webUI
+		And user "user3" should see the following elements
+			| /simple-folder%20(2)/from_user1/ |
+			| /simple-folder%20(3)/from_user2/ |
+
+	Scenario: receive shares with same name from different users
+		Given the setting "Automatically accept new incoming local user shares" in the section "Sharing" has been disabled
+		And user "user2" has shared folder "/simple-folder" with user "user3"
+		And user "user1" has shared folder "/simple-folder" with user "user3"
+		When the user logs in with username "user3" and password "1234" using the webUI
+		Then the folder "simple-folder" shared by "User One" should be in state "Pending" in the shared-with-you page on the webUI
+		And the folder "simple-folder" shared by "User Two" should be in state "Pending" in the shared-with-you page on the webUI
+
 	Scenario: accept an offered share
 		Given the setting "Automatically accept new incoming local user shares" in the section "Sharing" has been disabled
 		And user "user2" has shared folder "/simple-folder" with user "user1"
@@ -135,7 +158,6 @@ So that ....
 		Given the setting "Automatically accept new incoming local user shares" in the section "Sharing" has been disabled
 		And user "user2" has shared folder "/simple-folder" with user "user1"
 		And user "user2" has shared folder "/testimage.jpg" with group "grp1"
-		#TODO
 		And user "user1" has accepted the share "/simple-folder" offered by user "user2"
 		And user "user1" has accepted the share "/testimage.jpg" offered by user "user2"
 		And the user has logged in with username "user1" and password "1234" using the webUI
@@ -182,5 +204,34 @@ So that ....
 		And the file "testimage (2).jpg" should not be listed on the webUI
 		And the folder "simple-folder (2)" should be in state "Declined" in the shared-with-you page on the webUI
 		And the file "testimage (2).jpg" should be in state "Declined" in the shared-with-you page on the webUI
-		
+
+	Scenario: unshare renamed shares
+		Given the setting "Automatically accept new incoming local user shares" in the section "Sharing" has been enabled
+		And user "user2" has shared folder "/simple-folder" with user "user1"
+		And user "user1" has moved folder "/simple-folder (2)" to "/simple-folder-renamed"
+		And the user has logged in with username "user1" and password "1234" using the webUI
+		When the user unshares the folder "simple-folder-renamed" using the webUI
+		Then the folder "simple-folder-renamed" should not be listed on the webUI
+		And the folder "simple-folder-renamed" should be in state "Declined" in the shared-with-you page on the webUI
+
+	Scenario: unshare moved shares
+		Given the setting "Automatically accept new incoming local user shares" in the section "Sharing" has been enabled
+		And user "user2" has shared folder "/simple-folder" with user "user1"
+		And user "user1" has moved folder "/simple-folder (2)" to "/simple-folder/shared"
+		And the user has logged in with username "user1" and password "1234" using the webUI
+		When the user opens the folder "simple-folder" using the webUI
+		And the user unshares the folder "shared" using the webUI
+		Then the folder "shared" should not be listed on the webUI
+		And the folder "shared" should be in state "Declined" in the shared-with-you page on the webUI
+
+	Scenario: unshare renamed shares, accept it again
+		Given the setting "Automatically accept new incoming local user shares" in the section "Sharing" has been enabled
+		And user "user2" has shared folder "/simple-folder" with user "user1"
+		And user "user1" has moved folder "/simple-folder (2)" to "/simple-folder-renamed"
+		And the user has logged in with username "user1" and password "1234" using the webUI
+		When the user unshares the folder "simple-folder-renamed" using the webUI
+		And the user accepts the share "simple-folder-renamed" offered by user "User Two" using the webUI
+		Then the folder "simple-folder-renamed" should be in state "" in the shared-with-you page on the webUI
+		And the folder "simple-folder-renamed" should be listed in the all-files page on the webUI
+
 		

@@ -367,15 +367,29 @@ class WebUISharingContext extends RawMinkContext implements Context {
 		$action, $share, $offeredBy
 	) {
 		$this->webUIFilesContext->theUserBrowsesToTheSharedWithYouPage();
-		//TODO find row by user who offered the share
-		$fileRow = $this->sharedWithYouPage->findFileRowByName(
+		$fileRows = $this->sharedWithYouPage->findAllFileRowsByName(
 			$share, $this->getSession()
 		);
-		if ($action === "accepts") {
-			$fileRow->acceptShare($this->getSession());
-		} else {
-			$fileRow->declineShare($this->getSession());
+		
+		$found = false;
+		foreach ($fileRows as $fileRow) {
+			if ($offeredBy === $fileRow->getSharer()) {
+				if ($action === "accepts") {
+					$fileRow->acceptShare($this->getSession());
+				} else {
+					$fileRow->declineShare($this->getSession());
+				}
+				$found = true;
+				break;
+			}
 		}
+		if ($found === false) {
+			throw new Exception(
+				__METHOD__ .
+				" could not find share '$share' offered by '$offeredBy'"
+			);
+		}
+
 	}
 	/**
 	 * @Then all users and groups that contain the string :requiredString in their name should be listed in the autocomplete list on the webUI
