@@ -1071,7 +1071,7 @@ trait Sharing {
 	}
 
 	/**
-	 * @When /^user "([^"]*)" (rejects|accepts) the share "([^"]*)" offered by user "([^"]*)" using the API$/
+	 * @When /^user "([^"]*)" (declines|accepts) the share "([^"]*)" offered by user "([^"]*)" using the API$/
 	 * 
 	 * @param string $user
 	 * @param string $action
@@ -1099,7 +1099,7 @@ trait Sharing {
 		}
 		$url = "/apps/files_sharing/api/v{$this->sharingApiVersion}" .
 			   "/shares/pending/$shareId";
-		if ($action === "rejects") {
+		if ($action === "declines") {
 			$httpRequestMethod = "DELETE";
 		} elseif ($action === "accepts") {
 			$httpRequestMethod = "POST";
@@ -1117,7 +1117,7 @@ trait Sharing {
 
 	/**
 	 * 
-	 * @Then /^the API should report to user "([^"]*)" that these shares are in the (pending|accepted|rejected) state$/
+	 * @Then /^the API should report to user "([^"]*)" that these shares are in the (pending|accepted|declined) state$/
 	 * 
 	 * @param string $user
 	 * @param string $state
@@ -1168,7 +1168,7 @@ trait Sharing {
 	/**
 	 * 
 	 * @param string $user
-	 * @param string $state pending|accepted|rejected|all
+	 * @param string $state pending|accepted|declined|rejected|all
 	 * 
 	 * @throws InvalidArgumentException
 	 * @throws Exception
@@ -1183,6 +1183,7 @@ trait Sharing {
 			case 'accepted':
 				$stateCode = \OCP\Share::STATE_ACCEPTED;
 				break;
+			case 'declined':
 			case 'rejected':
 				$stateCode = \OCP\Share::STATE_REJECTED;
 				break;

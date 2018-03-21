@@ -60,23 +60,23 @@ So that ....
 		Given parameter "shareapi_auto_accept_share" of app "core" has been set to "yes"
 		When user "user0" shares folder "/PARENT" with user "user1" using the API
 		And user "user0" shares file "/textfile0.txt" with user "user1" using the API
-		And user "user1" rejects the share "/PARENT (2)" offered by user "user0" using the API
-		And user "user1" rejects the share "/textfile0 (2).txt" offered by user "user0" using the API
+		And user "user1" declines the share "/PARENT (2)" offered by user "user0" using the API
+		And user "user1" declines the share "/textfile0 (2).txt" offered by user "user0" using the API
 		Then user "user1" should not see the following elements
 			| /PARENT%20(2)/           |
 			| /PARENT%20(2)/parent.txt |
 			| /textfile0%20(2).txt     |
-		And the API should report to user "user1" that these shares are in the rejected state
+		And the API should report to user "user1" that these shares are in the declined state
 			| path                     |
 			| /PARENT/                 |
 			| /textfile0.txt           |
 
-	Scenario: accept a share that has been rejected before
+	Scenario: accept a share that has been declined before
 		Given parameter "shareapi_auto_accept_share" of app "core" has been set to "yes"
 		When user "user0" shares folder "/PARENT" with user "user1" using the API
 		And user "user0" shares file "/textfile0.txt" with user "user1" using the API
-		And user "user1" rejects the share "/PARENT (2)" offered by user "user0" using the API
-		And user "user1" rejects the share "/textfile0 (2).txt" offered by user "user0" using the API
+		And user "user1" declines the share "/PARENT (2)" offered by user "user0" using the API
+		And user "user1" declines the share "/textfile0 (2).txt" offered by user "user0" using the API
 		And user "user1" accepts the share "/PARENT" offered by user "user0" using the API
 		And user "user1" accepts the share "/textfile0.txt" offered by user "user0" using the API
 		Then user "user1" should see the following elements
@@ -98,7 +98,7 @@ So that ....
 			| /PARENT%20(2)/           |
 			| /PARENT%20(2)/parent.txt |
 			| /textfile0%20(2).txt     |
-		And the API should report to user "user1" that these shares are in the rejected state
+		And the API should report to user "user1" that these shares are in the declined state
 			| path                     |
 			| /PARENT/                 |
 			| /textfile0.txt           |
@@ -113,7 +113,7 @@ So that ....
 			| /PARENT%20(2)/           |
 			| /PARENT%20(2)/parent.txt |
 			| /textfile0%20(2).txt     |
-		And the API should report to user "user1" that these shares are in the rejected state
+		And the API should report to user "user1" that these shares are in the declined state
 			| path                     |
 			| /PARENT/                 |
 			| /textfile0.txt           |
@@ -130,11 +130,11 @@ So that ....
 		Given parameter "shareapi_auto_accept_share" of app "core" has been set to "yes"
 		When user "user0" shares folder "/PARENT" with user "user1" using the API
 		And user "user1" moves folder "/PARENT (2)" to "/PARENT-renamed" using the API
-		And user "user1" rejects the share "/PARENT-renamed" offered by user "user0" using the API
+		And user "user1" declines the share "/PARENT-renamed" offered by user "user0" using the API
 		Then user "user1" should not see the following elements
 			| /PARENT%20(2)/           |
 			| /PARENT-renamed/         |
-		And the API should report to user "user1" that these shares are in the rejected state
+		And the API should report to user "user1" that these shares are in the declined state
 			| path                     |
 			| /PARENT/                 |
 
@@ -142,7 +142,7 @@ So that ....
 		Given parameter "shareapi_auto_accept_share" of app "core" has been set to "yes"
 		When user "user0" shares folder "/PARENT" with user "user1" using the API
 		And user "user1" moves folder "/PARENT (2)" to "/PARENT-renamed" using the API
-		And user "user1" rejects the share "/PARENT-renamed" offered by user "user0" using the API
+		And user "user1" declines the share "/PARENT-renamed" offered by user "user0" using the API
 		And user "user1" accepts the share "/PARENT" offered by user "user0" using the API
 		Then user "user1" should see the following elements
 			| /PARENT/                 |
@@ -156,7 +156,7 @@ So that ....
 		And user "user0" has created a folder "/shared"
 		When user "user0" shares folder "/shared" with user "user1" using the API
 		And user "user1" moves folder "/shared" to "/PARENT/shared" using the API
-		And user "user1" rejects the share "/PARENT/shared" offered by user "user0" using the API
+		And user "user1" declines the share "/PARENT/shared" offered by user "user0" using the API
 		And user "user1" accepts the share "/shared" offered by user "user0" using the API
 		Then user "user1" should not see the following elements
 			| /shared/                 |
@@ -171,7 +171,7 @@ So that ....
 		And user "user0" has created a folder "/shared"
 		When user "user0" shares folder "/shared" with user "user1" using the API
 		And user "user1" moves folder "/shared" to "/PARENT/shared" using the API
-		And user "user1" rejects the share "/PARENT/shared" offered by user "user0" using the API
+		And user "user1" declines the share "/PARENT/shared" offered by user "user0" using the API
 		And user "user1" deletes folder "/PARENT" using the API
 		And user "user1" accepts the share "/shared" offered by user "user0" using the API
 		Then user "user1" should not see the following elements
@@ -266,8 +266,8 @@ So that ....
 		Given parameter "shareapi_auto_accept_share" of app "core" has been set to "no"
 		When user "user0" shares folder "/PARENT" with user "user1" using the API
 		And user "user0" shares file "/textfile0.txt" with user "user1" using the API
-		And user "user1" rejects the share "/PARENT" offered by user "user0" using the API
-		And user "user1" rejects the share "/textfile0.txt" offered by user "user0" using the API
+		And user "user1" declines the share "/PARENT" offered by user "user0" using the API
+		And user "user1" declines the share "/textfile0.txt" offered by user "user0" using the API
 		Then user "user1" should see the following elements
 			| /FOLDER/                 |
 			| /PARENT/                 |
@@ -276,7 +276,7 @@ So that ....
 			| /PARENT%20(2)/           |
 			| /PARENT%20(2)/parent.txt |
 			| /textfile0%20(2).txt     |
-		And the API should report to user "user1" that these shares are in the rejected state
+		And the API should report to user "user1" that these shares are in the declined state
 			| path                     |
 			| /PARENT/                 |
 			| /textfile0.txt           |
@@ -287,13 +287,13 @@ So that ....
 		And user "user0" shares file "/textfile0.txt" with user "user1" using the API
 		And user "user1" accepts the share "/PARENT" offered by user "user0" using the API
 		And user "user1" accepts the share "/textfile0.txt" offered by user "user0" using the API
-		And user "user1" rejects the share "/PARENT (2)" offered by user "user0" using the API
-		And user "user1" rejects the share "/textfile0 (2).txt" offered by user "user0" using the API
+		And user "user1" declines the share "/PARENT (2)" offered by user "user0" using the API
+		And user "user1" declines the share "/textfile0 (2).txt" offered by user "user0" using the API
 		Then user "user1" should not see the following elements
 			| /PARENT%20(2)/           |
 			| /PARENT%20(2)/parent.txt |
 			| /textfile0%20(2).txt     |
-		And the API should report to user "user1" that these shares are in the rejected state
+		And the API should report to user "user1" that these shares are in the declined state
 			| path                     |
 			| /PARENT/                 |
 			| /textfile0.txt           |
