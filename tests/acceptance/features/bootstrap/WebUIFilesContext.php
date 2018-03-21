@@ -204,6 +204,18 @@ class WebUIFilesContext extends RawMinkContext implements Context {
 	}
 
 	/**
+	 * @When the user reloads the current page of the webUI
+	 * @Given the user has reloaded the current page of the webUI
+	 *
+	 * @return void
+	 */
+	public function theUserReloadsTheCurrentPageOfTheWebUI() {
+		$this->getSession()->reload();
+		$pageObject = $this->getCurrentPageObject();
+		$pageObject->waitTillPageIsLoaded($this->getSession());
+	}
+
+	/**
 	 * @When the user browses to the shared-with-you page
 	 * @Given the user has browsed to the shared-with-you page
 	 *
@@ -317,7 +329,7 @@ class WebUIFilesContext extends RawMinkContext implements Context {
 				$this->filesPage->findFileActionsMenuBtnByNo($itemsCount)
 			);
 		}
-		$this->webUIGeneralContext->theUserReloadsTheCurrentPageOfTheWebUI();
+		$this->theUserReloadsTheCurrentPageOfTheWebUI();
 	}
 
 	/**
@@ -735,7 +747,7 @@ class WebUIFilesContext extends RawMinkContext implements Context {
 	public function theDeletedMovedElementsShouldBeListedOnTheWebUIAfterPageReload(
 		$shouldOrNot
 	) {
-		$this->webUIGeneralContext->theUserReloadsTheCurrentPageOfTheWebUI();
+		$this->theUserReloadsTheCurrentPageOfTheWebUI();
 		$this->theDeletedMovedElementsShouldBeListedOnTheWebUI($shouldOrNot);
 	}
 
