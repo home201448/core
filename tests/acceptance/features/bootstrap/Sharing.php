@@ -1071,6 +1071,7 @@ trait Sharing {
 	}
 
 	/**
+	 * @Given /^user "([^"]*)" has (declined|accepted) the share "([^"]*)" offered by user "([^"]*)"$/
 	 * @When /^user "([^"]*)" (declines|accepts) the share "([^"]*)" offered by user "([^"]*)" using the API$/
 	 * 
 	 * @param string $user
@@ -1099,9 +1100,9 @@ trait Sharing {
 		}
 		$url = "/apps/files_sharing/api/v{$this->sharingApiVersion}" .
 			   "/shares/pending/$shareId";
-		if ($action === "declines") {
+		if (substr($action, 0, 7) === "decline") {
 			$httpRequestMethod = "DELETE";
-		} elseif ($action === "accepts") {
+		} elseif (substr($action, 0, 6) === "accept") {
 			$httpRequestMethod = "POST";
 		}
 		
