@@ -1,5 +1,5 @@
 @api
-Feature: accept/reject shares comming from an internal users
+Feature: accept/decline shares comming from an internal users
 As a user
 I want to ....
 So that ....
@@ -56,7 +56,7 @@ So that ....
 			| /PARENT (2)/             |
 			| /textfile0 (2).txt       |
 
-	Scenario: reject a share that has been auto-accepted
+	Scenario: decline a share that has been auto-accepted
 		Given parameter "shareapi_auto_accept_share" of app "core" has been set to "yes"
 		And user "user0" has shared folder "/PARENT" with user "user1"
 		And user "user0" has shared file "/textfile0.txt" with user "user1"
@@ -151,7 +151,7 @@ So that ....
 			| path                     |
 			| /PARENT-renamed/         |
 
-	Scenario: move accepted share, reject it, accept again
+	Scenario: move accepted share, decline it, accept again
 		Given parameter "shareapi_auto_accept_share" of app "core" has been set to "yes"
 		And user "user0" has created a folder "/shared"
 		And user "user0" has shared folder "/shared" with user "user1"
@@ -166,7 +166,7 @@ So that ....
 			| path                     |
 			| /PARENT/shared/          |
 
-	Scenario: move accepted share, reject it, delete parent folder, accept again
+	Scenario: move accepted share, decline it, delete parent folder, accept again
 		Given parameter "shareapi_auto_accept_share" of app "core" has been set to "yes"
 		And user "user0" has created a folder "/shared"
 		And user "user0" has shared folder "/shared" with user "user1"
