@@ -149,9 +149,10 @@ class ApiController extends Controller {
 	 *
 	 * @param string $mode
 	 * @param string $direction
+	 * @param string $view
 	 * @return Response
 	 */
-	public function updateFileSorting($mode, $direction, $view) {
+	public function updateFileSorting($mode, $direction, $view = 'files') {
 		// currently we only store for the files view
 		if ($view !== 'files') {
 			return new Response();

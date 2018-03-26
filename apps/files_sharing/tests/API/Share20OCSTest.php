@@ -24,7 +24,6 @@
  */
 namespace OCA\Files_Sharing\Tests\API;
 
-use JMS\Serializer\EventDispatcher\EventDispatcher;
 use OCA\Files_Sharing\API\Share20OCS;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
@@ -39,10 +38,11 @@ use OCP\Lock\LockedException;
 use OCP\Share;
 use Symfony\Component\EventDispatcher\GenericEvent;
 use Test\TestCase;
-use OCA\Files_Sharing\Service\NotificationPublisher;
 use OCP\Files\Folder;
 use OCP\Files\Node;
 use OCP\Share\Exceptions\ShareNotFound;
+use Symfony\Component\EventDispatcher\EventDispatcher;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Class Share20OCSTest
@@ -60,9 +60,6 @@ class Share20OCSTest extends TestCase {
 
 	/** @var IUserManager | \PHPUnit_Framework_MockObject_MockObject */
 	private $userManager;
-
-	/** @var NotificationPublisher | \PHPUnit_Framework_MockObject_MockObject */
-	private $notificationPublisher;
 
 	/** @var IRequest | \PHPUnit_Framework_MockObject_MockObject */
 	private $request;
@@ -82,7 +79,7 @@ class Share20OCSTest extends TestCase {
 	/** @var IL10N */
 	private $l;
 
-	/** @var  EventDispatcher */
+	/** @var EventDispatcherInterface */
 	private $eventDispatcher;
 
 	protected function setUp() {
@@ -95,7 +92,6 @@ class Share20OCSTest extends TestCase {
 			->willReturn(true);
 		$this->groupManager = $this->createMock('OCP\IGroupManager');
 		$this->userManager = $this->createMock('OCP\IUserManager');
-		$this->notificationPublisher = $this->createMock(NotificationPublisher::class);
 		$this->request = $this->createMock('OCP\IRequest');
 		$this->rootFolder = $this->createMock('OCP\Files\IRootFolder');
 		$this->urlGenerator = $this->createMock('OCP\IURLGenerator');
@@ -123,7 +119,6 @@ class Share20OCSTest extends TestCase {
 			$this->shareManager,
 			$this->groupManager,
 			$this->userManager,
-			$this->notificationPublisher,
 			$this->request,
 			$this->rootFolder,
 			$this->urlGenerator,
@@ -145,7 +140,6 @@ class Share20OCSTest extends TestCase {
 				$this->shareManager,
 				$this->groupManager,
 				$this->userManager,
-				$this->notificationPublisher,
 				$this->request,
 				$this->rootFolder,
 				$this->urlGenerator,
@@ -455,7 +449,6 @@ class Share20OCSTest extends TestCase {
 					$this->shareManager,
 					$this->groupManager,
 					$this->userManager,
-					$this->notificationPublisher,
 					$this->request,
 					$this->rootFolder,
 					$this->urlGenerator,
@@ -852,10 +845,6 @@ class Share20OCSTest extends TestCase {
 			$calledAfterCreate[] = 'share.afterCreate';
 			$calledAfterCreate[] = $event;
 		});
-
-		$this->notificationPublisher->expects($this->once())
-			->method('sendNotification')
-			->with($share);
 
 		$expected = new \OC\OCS\Result();
 		$result = $ocs->createShare();
@@ -2716,7 +2705,6 @@ class Share20OCSTest extends TestCase {
 			$shareManager,
 			$this->groupManager,
 			$this->userManager,
-			$this->notificationPublisher,
 			$this->request,
 			$this->rootFolder,
 			$this->urlGenerator,
@@ -2809,7 +2797,6 @@ class Share20OCSTest extends TestCase {
 			$this->shareManager,
 			$this->groupManager,
 			$this->userManager,
-			$this->notificationPublisher,
 			$this->request,
 			$this->rootFolder,
 			$this->urlGenerator,
@@ -2910,37 +2897,6 @@ class Share20OCSTest extends TestCase {
 
 		$this->assertTrue($shareBeforeCreateCalled, 'share.beforeCreate not called');
 		$this->assertTrue($shareAfterCreateCalled, 'share.afterCreate not called');
-	}
-
-	private function createExpectedNotification($messageId, $messageParams, $userId, $shareId, $link) {
-		$notification = $this->createMock(INotification::class);
-		$notification->expects($this->once())
-			->method('setApp')
-			->with('files_sharing')
-			->willReturn($notification);
-		$notification->expects($this->once())
-			->method('setUser')
-			->with($userId)
-			->willReturn($notification);
-		$notification->expects($this->once())
-			->method('setLink')
-			->with($link)
-			->willReturn($notification);
-		$notification->expects($this->once())
-			->method('setDateTime')
-			->willReturn($notification);
-		$notification->expects($this->once())
-			->method('setObject')
-			->with('local_share', $shareId)
-			->willReturn($notification);
-		$notification->expects($this->once())
-			->method('setSubject')
-			->with($messageId, $messageParams)
-			->willReturn($notification);
-		$notification->expects($this->never())
-			->method('setMessage');
-
-		return $notification;
 	}
 
 	public function providesGetSharesAll() {

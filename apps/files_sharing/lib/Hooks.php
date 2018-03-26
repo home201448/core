@@ -32,6 +32,8 @@ use OCP\Files\IRootFolder;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use OCP\Share\IShare;
 use Symfony\Component\EventDispatcher\GenericEvent;
+use OCA\Files_Sharing\Service\NotificationPublisher;
+use OCP\Share\Exceptions\ShareNotFound;
 
 class Hooks {
 
@@ -55,16 +57,23 @@ class Hooks {
 	 */
 	private $shareManager;
 
+	/**
+	 * @var NotificationPublisher
+	 */
+	private $notificationPublisher;
+
 	public function __construct(
 		IRootFolder $rootFolder,
 		IUrlGenerator $urlGenerator,
 		EventDispatcher $eventDispatcher,
-		\OCP\Share\IManager $shareManager
+		\OCP\Share\IManager $shareManager,
+		NotificationPublisher $notificationPublisher
 	) {
 		$this->rootFolder = $rootFolder;
 		$this->urlGenerator = $urlGenerator;
 		$this->eventDispatcher = $eventDispatcher;
 		$this->shareManager = $shareManager;
+		$this->notificationPublisher = $notificationPublisher;
 	}
 
 	public static function deleteUser($params) {
@@ -109,6 +118,34 @@ class Hooks {
 
 				if ($link !== null) {
 					$event->setArgument('resolvedWebLink', $link);
+				}
+			}
+		);
+
+		$this->eventDispatcher->addListener(
+			'share.afterCreate',
+			function(GenericEvent $event) {
+				$shareData = $event->getArgument('share');
+				try {
+					$shareObject = $this->shareManager->getShareById($shareData['id']);
+
+					$this->notificationPublisher->sendNotification($shareObject);
+				} catch (ShareNotFound $e) {
+					// nothing to do then, share was concurrently deleted
+				}
+			}
+		);
+
+		$this->eventDispatcher->addListener(
+			'share.afterDelete',
+			function(GenericEvent $event) {
+				$shareData = $event->getArgument('share');
+				try {
+					$shareObject = $this->shareManager->getShareById($shareData['id']);
+
+					$this->notificationPublisher->discardNotification($shareObject);
+				} catch (ShareNotFound $e) {
+					// nothing to do then, share was already deleted
 				}
 			}
 		);

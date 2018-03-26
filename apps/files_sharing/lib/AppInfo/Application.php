@@ -35,6 +35,7 @@ use OCA\Files_Sharing\MountProvider;
 use OCP\AppFramework\App;
 use OCP\IContainer;
 use OCA\Files_Sharing\Hooks;
+use OCA\Files_Sharing\Service\NotificationPublisher;
 
 class Application extends App {
 	public function __construct(array $urlParams = []) {
@@ -134,7 +135,8 @@ class Application extends App {
 				$c->getServer()->getLazyRootFolder(),
 				$c->getServer()->getUrlGenerator(),
 				$c->getServer()->getEventDispatcher(),
-				$c->getServer()->getShareManager()
+				$c->getServer()->getShareManager(),
+				$c->query(NotificationPublisher::class)
 			);
 		});
 
