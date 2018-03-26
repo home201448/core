@@ -29,11 +29,13 @@ OCA.Sharing.App = {
 
 		var fileActions = this._createFileActions();
 
+		var urlParams = OC.Util.History.parseUrlQuery();
 		this._inFileList = new OCA.Sharing.FileList(
 			$el,
 			{
 				id: 'shares.self',
 				scrollContainer: $('#app-content'),
+				scrollTo: urlParams.scrollto,
 				sharedWithUser: true,
 				fileActions: fileActions,
 				config: OCA.Files.App.getFilesConfig()

@@ -2889,6 +2889,36 @@
 		},
 
 		/**
+		 * Scrolls the container to make the given row visible
+		 *
+		 * @param $fileRow row to make visible
+		 * @param {Function} callback callback to call after scroll is complete
+		 */
+		_scrollToRow: function($fileRow, callback) {
+			var currentOffset = this.$container.scrollTop();
+			var additionalOffset = 0;
+			var $controls = this.$el.find('#controls');
+			if ($controls.exists()) {
+				additionalOffset += $controls.height() + $controls.offset().top;
+			}
+
+			// Animation
+			var $scrollContainer = this.$container;
+			if ($scrollContainer[0] === window) {
+				// need to use "body" to animate scrolling
+				// when the scroll container is the window
+				$scrollContainer = $('body');
+			}
+			$scrollContainer.animate({
+				// Scrolling to the top of the new element
+				scrollTop: currentOffset + $fileRow.offset().top - $fileRow.height() * 2 - additionalOffset
+			}, {
+				duration: 500,
+				complete: callback
+			});
+		},
+
+		/**
 		 * Scroll to the last file of the given list
 		 * Highlight the list of files
 		 * @param files array of filenames,
@@ -2908,44 +2938,27 @@
 				return;
 			}
 
-			var currentOffset = this.$container.scrollTop();
-			var additionalOffset = this.$el.find("#controls").height()+this.$el.find("#controls").offset().top;
-
-			// Animation
 			var _this = this;
-			var $scrollContainer = this.$container;
-			if ($scrollContainer[0] === window) {
-				// need to use "body" to animate scrolling
-				// when the scroll container is the window
-				$scrollContainer = $('body');
-			}
-			$scrollContainer.animate({
-				// Scrolling to the top of the new element
-				scrollTop: currentOffset + $fileRow.offset().top - $fileRow.height() * 2 - additionalOffset
-			}, {
-				duration: 500,
-				complete: function() {
-					// Highlighting function
-					var highlightRow = highlightFunction;
+			this._scrollToRow($fileRow, function() {
+				// Highlighting function
+				var highlightRow = highlightFunction;
 
-					if (!highlightRow) {
-						highlightRow = function($fileRow) {
-							$fileRow.addClass("highlightUploaded");
-							setTimeout(function() {
-								$fileRow.removeClass("highlightUploaded");
-							}, 2500);
-						};
+				if (!highlightRow) {
+					highlightRow = function($fileRow) {
+						$fileRow.addClass("highlightUploaded");
+						setTimeout(function() {
+							$fileRow.removeClass("highlightUploaded");
+						}, 2500);
+					};
+				}
+
+				// Loop over uploaded files
+				for(var i=0; i<files.length; i++) {
+					var $fileRow = _this.findFileEl(files[i]);
+
+					if($fileRow.length !== 0) { // Checking element existence
+						highlightRow($fileRow);
 					}
-
-					// Loop over uploaded files
-					for(var i=0; i<files.length; i++) {
-						var $fileRow = _this.findFileEl(files[i]);
-
-						if($fileRow.length !== 0) { // Checking element existence
-							highlightRow($fileRow);
-						}
-					}
-
 				}
 			});
 		},
