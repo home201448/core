@@ -304,6 +304,31 @@
 			return fileInfo;
 		},
 
+		scrollTo: function(fileId) {
+			var rows = this.$fileList.find('tr');
+
+			function filterId(el) {
+				return $(el).attr('data-id') === fileId;
+			}
+
+			var fileRows = _.filter(rows, filterId);
+			while(!fileRows.length && (rows = this._nextPage(false)) !== false) { // Checking element existence
+				fileRows = _.filter(rows, filterId);
+			}
+
+			if (!fileRows.length) {
+				return;
+			}
+
+			var $fileRow = $(fileRows[0]);
+			this._scrollToRow($fileRow, function() {
+				$fileRow.addClass('searchresult');
+				$fileRow.one('hover', function() {
+					$fileRow.removeClass('searchresult');
+				});
+			});
+		},
+
 		_makeFilesFromRemoteShares: function(data) {
 			var files = data;
 
