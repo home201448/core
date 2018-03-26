@@ -39,7 +39,6 @@ use OCP\Share\IManager;
 use OCP\Share\IShare;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\EventDispatcher\GenericEvent;
-use OCA\Files_Sharing\Service\NotificationPublisher;
 use OCA\Files_Sharing\Helper;
 
 /**
@@ -55,8 +54,6 @@ class Share20OCS {
 	private $groupManager;
 	/** @var IUserManager */
 	private $userManager;
-	/** @var \OCP\Notification\IManager */
-	private $notificationPublisher;
 	/** @var IRequest */
 	private $request;
 	/** @var IRootFolder */
@@ -84,7 +81,6 @@ class Share20OCS {
 	 * @param IManager $shareManager
 	 * @param IGroupManager $groupManager
 	 * @param IUserManager $userManager
-	 * @param NotificationPublisher $notificationPublisher
 	 * @param IRequest $request
 	 * @param IRootFolder $rootFolder
 	 * @param IURLGenerator $urlGenerator
@@ -97,7 +93,6 @@ class Share20OCS {
 			IManager $shareManager,
 			IGroupManager $groupManager,
 			IUserManager $userManager,
-			NotificationPublisher $notificationPublisher,
 			IRequest $request,
 			IRootFolder $rootFolder,
 			IURLGenerator $urlGenerator,
@@ -109,7 +104,6 @@ class Share20OCS {
 		$this->shareManager = $shareManager;
 		$this->userManager = $userManager;
 		$this->groupManager = $groupManager;
-		$this->notificationPublisher = $notificationPublisher;
 		$this->request = $request;
 		$this->rootFolder = $rootFolder;
 		$this->urlGenerator = $urlGenerator;
@@ -529,8 +523,6 @@ class Share20OCS {
 		$afterEvent->setArgument('share', $formattedShareAfterCreate);
 		$afterEvent->setArgument('result', 'success');
 		$this->eventDispatcher->dispatch('share.afterCreate', $afterEvent);
-
-		$this->notificationPublisher->sendNotification($share);
 
 		return new \OC\OCS\Result($formattedShareAfterCreate);
 	}

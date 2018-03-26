@@ -70,6 +70,12 @@ class NotificationPublisher {
 	 * @param IShare $share share
 	 */
 	public function sendNotification(IShare $share) {
+		if ($share->getShareType() !== \OCP\Share::SHARE_TYPE_USER &&
+			$share->getShareType() !== \OCP\Share::SHARE_TYPE_GROUP) {
+
+			return;
+	   	}
+
 		$autoAccept = true;
 		if ($share->getState() === \OCP\Share::STATE_PENDING) {
 			$autoAccept = false;
@@ -109,6 +115,24 @@ class NotificationPublisher {
 			}
 
 			$this->notificationManager->notify($notification);
+		}
+	}
+
+	/**
+	 * Discards all notification related to the given share.
+	 * This is useful to cancel notifications in case said share
+	 * is being deleted
+	 *
+	 * @param IShare $share share
+	 */
+	public function discardNotification(IShare $share) {
+		foreach ($this->getAffectedUsers($share) as $userId) {
+			$notification = $this->notificationManager->createNotification();
+			$notification->setApp('files_sharing')
+				->setUser($userId)
+				->setObject('local_share', $share->getId());
+
+			$this->notificationManager->markProcessed($notification);
 		}
 	}
 

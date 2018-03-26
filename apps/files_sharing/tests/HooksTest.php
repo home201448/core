@@ -28,32 +28,64 @@ use OCP\IURLGenerator;
 use OCP\Files\IRootFolder;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Test\TestCase;
+use OCA\Files_Sharing\Service\NotificationPublisher;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
  * @group DB
  */
 class HooksTest extends TestCase {
 
+	/**
+	 * @var EventDispatcherInterface | \PHPUnit_Framework_MockObject_MockObject 
+	 */
 	private $eventDispatcher;
+
+	/**
+	 * @var IURLGenerator | \PHPUnit_Framework_MockObject_MockObject 
+	 */
+	private $urlGenerator;
+
+	/**
+	 * @var IRootFolder | \PHPUnit_Framework_MockObject_MockObject 
+	 */
+	private $rootFolder;
+
+	/**
+	 * @var \OCP\Share\IManager | \PHPUnit_Framework_MockObject_MockObject 
+	 */
+	private $shareManager;
+
+	/**
+	 * @var NotificationPublisher | \PHPUnit_Framework_MockObject_MockObject 
+	 */
+	private $notificationPublisher;
+
+	/**
+	 * @var Hooks
+	 */
+	private $hooks;
 
 	public function setUp() {
 		$this->eventDispatcher = new EventDispatcher();
+		$this->urlGenerator = $this->createMock(IURLGenerator::class);
+		$this->rootFolder = $this->createMock(IRootFolder::class);
+		$this->shareManager = $this->createMock(\OCP\Share\IManager::class);
+		$this->notificationPublisher = $this->createMock(NotificationPublisher::class);
+
+		$this->hooks = new Hooks(
+			$this->rootFolder,
+			$this->urlGenerator,
+			$this->eventDispatcher,
+			$this->shareManager,
+			$this->notificationPublisher
+		);
+		$this->hooks->registerListeners();
+
 	}
 
 	public function testPrivateLink() {
-		$urlGenerator = $this->createMock(IURLGenerator::class);
-		$rootFolder = $this->createMock(IRootFolder::class);
-		$shareManager = $this->createMock(\OCP\Share\IManager::class);
-
-		$hooks = new Hooks(
-			$rootFolder,
-			$urlGenerator,
-			$this->eventDispatcher,
-			$shareManager
-		);
-		$hooks->registerListeners();
-
-		$urlGenerator
+		$this->urlGenerator
 			->expects($this->once())
 			->method('linkToRoute')
 			->with('files.view.index', ['view' => 'sharingin', 'scrollto' => '123'])
@@ -69,7 +101,7 @@ class HooksTest extends TestCase {
 			->method('getNodeId')
 			->willReturn(999);
 
-		$shareManager->expects($this->exactly(2))
+		$this->shareManager->expects($this->exactly(2))
 			->method('getSharedWith')
 			->withConsecutive(
 				['currentuser', \OCP\Share::SHARE_TYPE_USER],
@@ -93,23 +125,11 @@ class HooksTest extends TestCase {
 	}
 
 	public function testPrivateLinkNoMatch() {
-		$urlGenerator = $this->createMock(IURLGenerator::class);
-		$rootFolder = $this->createMock(IRootFolder::class);
-		$shareManager = $this->createMock(\OCP\Share\IManager::class);
-
-		$hooks = new Hooks(
-			$rootFolder,
-			$urlGenerator,
-			$this->eventDispatcher,
-			$shareManager
-		);
-		$hooks->registerListeners();
-
-		$urlGenerator
+		$this->urlGenerator
 			->expects($this->never())
 			->method('linkToRoute');
 
-		$shareManager->expects($this->exactly(2))
+		$this->shareManager->expects($this->exactly(2))
 			->method('getSharedWith')
 			->willReturn([]);
 
@@ -123,6 +143,42 @@ class HooksTest extends TestCase {
 
 		$this->assertNull($event->getArgument('resolvedWebLink'));
 		$this->assertNull($event->getArgument('resolvedDavLink'));
+	}
+
+	public function testPublishShareNotification() {
+		$share = $this->createMock(IShare::class);
+
+		$this->shareManager->expects($this->once())
+			->method('getShareById')
+			->with('123')
+			->willReturn($share);
+
+		$this->notificationPublisher->expects($this->once())
+			->method('sendNotification')
+			->with($share);
+
+		$event = new GenericEvent(null, [
+			'share' => ['id' => '123'],
+		]);
+		$this->eventDispatcher->dispatch('share.afterCreate', $event);
+	}
+
+	public function testDiscardShareNotification() {
+		$share = $this->createMock(IShare::class);
+
+		$this->shareManager->expects($this->once())
+			->method('getShareById')
+			->with('123')
+			->willReturn($share);
+
+		$this->notificationPublisher->expects($this->once())
+			->method('discardNotification')
+			->with($share);
+
+		$event = new GenericEvent(null, [
+			'share' => ['id' => '123'],
+		]);
+		$this->eventDispatcher->dispatch('share.afterDelete', $event);
 	}
 }
 
