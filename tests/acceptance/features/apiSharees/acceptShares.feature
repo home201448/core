@@ -262,6 +262,18 @@ So that ....
 			| /PARENT (2)/             |
 			| /textfile0 (2).txt       |
 
+	Scenario: accept an accepted share
+		Given parameter "shareapi_auto_accept_share" of app "core" has been set to "no"
+		And user "user0" has created a folder "/shared"
+		And user "user0" has shared folder "/shared" with user "user1"
+		When user "user1" accepts the share "/shared" offered by user "user0" using the API
+		And user "user1" accepts the share "/shared" offered by user "user0" using the API
+		Then user "user1" should see the following elements
+			| /shared/    |
+		And the API should report to user "user1" that these shares are in the accepted state
+			| path        |
+			| /shared/    |
+
 	Scenario: declines a pending share
 		Given parameter "shareapi_auto_accept_share" of app "core" has been set to "no"
 		And user "user0" shares folder "/PARENT" with user "user1"
