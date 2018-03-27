@@ -80,6 +80,7 @@ class WebUISharingContext extends RawMinkContext implements Context {
 	 *
 	 * @param FilesPage $filesPage
 	 * @param PublicLinkFilesPage $publicLinkFilesPage
+	 * @param SharedWithYouPage $sharedWithYouPage
 	 */
 	public function __construct(
 		FilesPage $filesPage,
