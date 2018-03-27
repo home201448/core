@@ -125,28 +125,16 @@ class Hooks {
 		$this->eventDispatcher->addListener(
 			'share.afterCreate',
 			function(GenericEvent $event) {
-				$shareData = $event->getArgument('share');
-				try {
-					$shareObject = $this->shareManager->getShareById($shareData['id']);
-
-					$this->notificationPublisher->sendNotification($shareObject);
-				} catch (ShareNotFound $e) {
-					// nothing to do then, share was concurrently deleted
-				}
+				$shareObject = $event->getArgument('shareObject');
+				$this->notificationPublisher->sendNotification($shareObject);
 			}
 		);
 
 		$this->eventDispatcher->addListener(
 			'share.afterDelete',
 			function(GenericEvent $event) {
-				$shareData = $event->getArgument('share');
-				try {
-					$shareObject = $this->shareManager->getShareById($shareData['id']);
-
-					$this->notificationPublisher->discardNotification($shareObject);
-				} catch (ShareNotFound $e) {
-					// nothing to do then, share was already deleted
-				}
+				$shareObject = $event->getArgument('shareObject');
+				$this->notificationPublisher->discardNotification($shareObject);
 			}
 		);
 	}
