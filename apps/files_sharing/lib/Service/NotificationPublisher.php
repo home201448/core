@@ -76,9 +76,8 @@ class NotificationPublisher {
 			return;
 	   	}
 
-		$autoAccept = true;
-		if ($share->getState() === \OCP\Share::STATE_PENDING) {
-			$autoAccept = false;
+		if ($share->getState() !== \OCP\Share::STATE_PENDING) {
+			return;
 		}
 
 		$fileLink = $this->urlGenerator->linkToRouteAbsolute('files.viewcontroller.showFile', ['fileId' => $share->getNode()->getId()]);
@@ -98,21 +97,17 @@ class NotificationPublisher {
 			);
 			$notification->setLink($fileLink);
 
-			if ($autoAccept) {
-				$notification->setSubject('local_share_accepted', [$share->getShareOwner(), $share->getSharedBy(), $share->getNode()->getName()]);
-			} else {
-				$notification->setSubject('local_share', [$share->getShareOwner(), $share->getSharedBy(), $share->getNode()->getName()]);
+			$notification->setSubject('local_share', [$share->getShareOwner(), $share->getSharedBy(), $share->getNode()->getName()]);
 
-				$acceptAction = $notification->createAction();
-				$acceptAction->setLabel('accept');
-				$acceptAction->setLink($endpointUrl, 'POST');
-				$notification->addAction($acceptAction);
+			$acceptAction = $notification->createAction();
+			$acceptAction->setLabel('accept');
+			$acceptAction->setLink($endpointUrl, 'POST');
+			$notification->addAction($acceptAction);
 
-				$declineAction = $notification->createAction();
-				$declineAction->setLabel('decline');
-				$declineAction->setLink($endpointUrl, 'DELETE');
-				$notification->addAction($declineAction);
-			}
+			$declineAction = $notification->createAction();
+			$declineAction->setLabel('decline');
+			$declineAction->setLink($endpointUrl, 'DELETE');
+			$notification->addAction($declineAction);
 
 			$this->notificationManager->notify($notification);
 		}
