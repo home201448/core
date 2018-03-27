@@ -500,6 +500,7 @@ class Share20OCS {
 
 
 		$beforeEvent->setArgument('share', $this->formatShare($share));
+		$beforeEvent->setArgument('shareObject', $share);
 
 		$this->eventDispatcher->dispatch('share.beforeCreate', $beforeEvent);
 
@@ -521,6 +522,7 @@ class Share20OCS {
 		$formattedShareAfterCreate = $this->formatShare($share);
 		$afterEvent = new GenericEvent(null, []);
 		$afterEvent->setArgument('share', $formattedShareAfterCreate);
+		$afterEvent->setArgument('shareObject', $share);
 		$afterEvent->setArgument('result', 'success');
 		$this->eventDispatcher->dispatch('share.afterCreate', $afterEvent);
 

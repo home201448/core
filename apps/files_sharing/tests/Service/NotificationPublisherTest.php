@@ -210,7 +210,7 @@ class NotificationPublisherTest extends TestCase {
 		$share->method('getSharedWith')->willReturn('group1');
 		$share->method('getState')->willReturn(\OCP\Share::STATE_ACCEPTED);
 
-		$this->makeGroup('group1', ['groupMember1', 'groupMember2', 'shareOwner', 'sharedByUser']);
+		$this->makeGroup('group1', ['groupMember1', 'groupMember2', 'shareOwner', 'sharedBy']);
 
 		$this->publisher->sendNotification($share);
 	}
@@ -316,7 +316,7 @@ class NotificationPublisherTest extends TestCase {
 		$share->method('getSharedWith')->willReturn('group1');
 		$share->method('getState')->willReturn(\OCP\Share::STATE_ACCEPTED);
 
-		$this->makeGroup('group1', ['groupMember1', 'groupMember2', 'shareOwner', 'sharedByUser']);
+		$this->makeGroup('group1', ['groupMember1', 'groupMember2', 'shareOwner', 'sharedBy']);
 
 		$this->publisher->discardNotification($share);
 	}
