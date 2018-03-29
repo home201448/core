@@ -345,8 +345,7 @@ describe('OCA.Sharing.FileList tests', function() {
 			expect($tr.attr('data-tags')).toEqual(OC.TAG_FAVORITE);
 			expect($tr.find('.nametext').text().trim()).toEqual('local name');
 
-			expect($tr.find('a.name').hasClass('disable-click')).toEqual(true);
-			expect($tr.find('a.name').attr('href')).toEqual('#');
+            expect($tr.find('a.name').attr('href')).toEqual('#');
 
 			var file = fileList.elementToFile($tr);
 			expect(file.shares).toEqual([{id: '7'}, {id: '8'}]);
@@ -867,7 +866,7 @@ describe('OCA.Sharing.FileList tests', function() {
 				sharedWithUser: true
 			});
 		});
-	
+
 		it('sorts by state then name', function () {
 			var $tr;
 			fileList.add({
