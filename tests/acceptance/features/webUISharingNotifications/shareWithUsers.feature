@@ -21,15 +21,32 @@ So that those users can access the files and folders
 			| User User One shared "simple-folder" with you  |
 			| User User One shared "data.zip" with you       |
 
+	Scenario: Notification is gone after accepting a share
+		Given the setting "Automatically accept new incoming local user shares" in the section "Sharing" has been disabled
+		And user "user1" has shared folder "/simple-folder" with user "user2"
+		And user "user1" has shared folder "/simple-empty-folder" with user "user2"
+		When the user accepts all shares displayed in the notifications on the webUI
+		Then user "user2" should have 0 notifications
+
 	Scenario: accept an offered share
 		Given the setting "Automatically accept new incoming local user shares" in the section "Sharing" has been disabled
-		And user "user2" has shared folder "/simple-folder" with user "user1"
-		And user "user2" has shared file "/testimage.jpg" with user "user1"
-		And the user has logged in with username "user1" and password "1234" using the webUI
+		And user "user1" has shared folder "/simple-folder" with user "user2"
+		And user "user1" has shared folder "/simple-empty-folder" with user "user2"
 		When the user accepts all shares displayed in the notifications on the webUI
-		Then the folder "simple-folder (2)" should be in state "" in the shared-with-you page on the webUI
-		And the file "testimage.jpg" should be in state "Pending" in the shared-with-you page on the webUI
-		And the folder "simple-folder (2)" should be in state "" in the shared-with-you page on the webUI after a page reload
-		And the file "testimage.jpg" should be in state "Pending" in the shared-with-you page on the webUI after a page reload
-		And the folder "simple-folder (2)" should be listed in the all-files page on the webUI
-		And the file "testimage (2).jpg" should not be listed in the all-files page on the webUI
+		Then the folder "simple-folder (2)" should be listed in the all-files page on the webUI
+		And the folder "simple-empty-folder (2)" should be listed in the all-files page on the webUI
+		And the folder "simple-folder (2)" should be in state "" in the shared-with-you page on the webUI
+		And the folder "simple-empty-folder (2)" should be in state "" in the shared-with-you page on the webUI
+
+	Scenario: reject an offered share
+		Given the setting "Automatically accept new incoming local user shares" in the section "Sharing" has been disabled
+		And user "user1" has shared folder "/simple-folder" with user "user2"
+		And user "user1" has shared folder "/simple-empty-folder" with user "user2"
+		When the user declines all shares displayed in the notifications on the webUI
+		Then the folder "simple-folder (2)" should not be listed in the all-files page on the webUI
+		And the folder "simple-empty-folder (2)" should not be listed in the all-files page on the webUI
+		And the folder "simple-folder" should be in state "Declined" in the shared-with-you page on the webUI
+		And the folder "simple-empty-folder" should be in state "Declined" in the shared-with-you page on the webUI
+
+
+		
