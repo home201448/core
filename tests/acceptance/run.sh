@@ -94,6 +94,23 @@ $OCC config:system:set skeletondirectory --value="$(pwd)/skeleton"
 $OCC config:app:set core enable_external_storage --value=yes
 $OCC config:system:set files_external_allow_create_new_local --value=true
 
+#Enable needed apps
+if [ -z "$APPS_TO_ENABLE" ]
+then
+	APPS_TO_ENABLE=""
+fi
+
+APPS_TO_REDISABLE="";
+
+for APP_TO_ENABLE in $APPS_TO_ENABLE; do
+	PREVIOUS_APP_STATUS=$($OCC --no-warnings app:list "^$APP_TO_ENABLE$")
+	if [[ "$PREVIOUS_APP_STATUS" =~ ^Disabled: ]]
+	then
+		APPS_TO_REDISABLE="$APPS_TO_REDISABLE $APP_TO_ENABLE";
+		$OCC app:enable $APP_TO_ENABLE || { echo "Unable to enable $APP_TO_ENABLE app" >&2; exit 1; }
+	fi
+done
+
 PREVIOUS_TESTING_APP_STATUS=$($OCC --no-warnings app:list "^testing$")
 if [[ "$PREVIOUS_TESTING_APP_STATUS" =~ ^Disabled: ]]
 then
@@ -176,6 +193,11 @@ if test "A$PREVIOUS_SKELETON_DIR" = "A"; then
 else
 	$OCC config:system:set skeletondirectory --value="$PREVIOUS_SKELETON_DIR"
 fi
+
+# disable other enabled apps
+for APP_TO_DISABLE in $APPS_TO_REDISABLE; do
+	$OCC app:disable  $APP_TO_DISABLE
+done
 
 # Clear storage folder
 rm -Rf work/local_storage/*
