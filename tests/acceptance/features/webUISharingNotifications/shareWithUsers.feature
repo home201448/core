@@ -12,7 +12,7 @@ So that those users can access the files and folders
 		And the user has browsed to the login page
 		And the user has logged in with username "user2" and password "1234" using the webUI
 
-	Scenario: notifications about new share is displayed when shares are autoaccepted
+	Scenario: notifications about new share is displayed when autoacepting is disabled
 		Given the setting "Automatically accept new incoming local user shares" in the section "Sharing" has been disabled
 		And user "user1" has shared folder "/simple-folder" with user "user2"
 		And user "user1" has shared folder "/data.zip" with user "user2"
@@ -48,5 +48,3 @@ So that those users can access the files and folders
 		And the folder "simple-folder" should be in state "Declined" in the shared-with-you page on the webUI
 		And the folder "simple-empty-folder" should be in state "Declined" in the shared-with-you page on the webUI
 
-
-		
