@@ -894,10 +894,17 @@ trait BasicStructure {
 	 * then it is returned unmodified
 	 *
 	 * @param string $value
-	 *
+	 * @param array $functions associative array of functions and parameters to be
+	 *                         called on every replacement string before the
+	 *                         replacement
+	 *                         function name has to the key and the parameters an
+	 *                         own array
+	 *                         the replacement itself will be used as first paramenter
+	 *                         e.g. substituteInLineCodes($value, ['preg_quote' => ['/']])
+	 * 
 	 * @return string
 	 */
-	public function substituteInLineCodes($value) {
+	public function substituteInLineCodes($value, $functions = []) {
 		$substitutions = [
 			[
 				"code" => "%base_url%",
@@ -949,12 +956,17 @@ trait BasicStructure {
 			]
 		];
 		foreach ($substitutions as $substitution) {
+			$replace = call_user_func_array(
+				$substitution["function"],
+				$substitution["parameter"]
+			);
+			foreach ($functions as $function => $parameters) {
+				array_unshift($parameters, $replace);
+				$replace = call_user_func_array($function, $parameters);
+			}
 			$value = str_replace(
 				$substitution["code"],
-				call_user_func_array(
-					$substitution["function"],
-					$substitution["parameter"]
-				),
+				$replace,
 				$value
 			);
 		}
