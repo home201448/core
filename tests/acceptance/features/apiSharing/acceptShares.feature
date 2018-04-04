@@ -276,8 +276,8 @@ So that ....
 
 	Scenario: declines a pending share
 		Given parameter "shareapi_auto_accept_share" of app "core" has been set to "no"
-		And user "user0" shares folder "/PARENT" with user "user1"
-		And user "user0" shares file "/textfile0.txt" with user "user1"
+		And user "user0" has shared folder "/PARENT" with user "user1"
+		And user "user0" has shared file "/textfile0.txt" with user "user1"
 		When user "user1" declines the share "/PARENT" offered by user "user0" using the API
 		And user "user1" declines the share "/textfile0.txt" offered by user "user0" using the API
 		Then user "user1" should see the following elements
@@ -322,8 +322,8 @@ So that ....
 		Given parameter "shareapi_auto_accept_share" of app "core" has been set to "no"
 		And user "user0" has shared folder "/PARENT" with group "grp1"
 		And user "user0" has shared file "/textfile0.txt" with group "grp1"
-		When user "user1" acceptes the share "/PARENT" offered by user "user0" using the API
-		And user "user1" acceptes the share "/textfile0.txt" offered by user "user0" using the API
+		When user "user1" accepts the share "/PARENT" offered by user "user0" using the API
+		And user "user1" accepts the share "/textfile0.txt" offered by user "user0" using the API
 		Then user "user2" should not see the following elements
 			| /PARENT%20(2)/           |
 			| /PARENT%20(2)/parent.txt |
