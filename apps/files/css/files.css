@@ -360,6 +360,10 @@ table td.filename input.filename {
 /* hack to disable cursor on non-clickable links as removing the anchor tag would break more */
 #filestable td.filename a.name.disable-click,
 #filestable td.filename a.name.disable-click span,
+#filestable tr.share-state-pending td.filename .action-share,
+#filestable tr.share-state-pending td.filename .action-share span,
+#filestable tr.share-state-pending td.filename .innernametext,
+#filestable tr.share-state-pending td.filename .thumbnail,
 #filestable tr.share-state-rejected td.filename .innernametext,
 #filestable tr.share-state-rejected td.filename .thumbnail {
 	cursor: default;
