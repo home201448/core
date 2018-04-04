@@ -413,6 +413,9 @@ class WebUIGeneralContext extends RawMinkContext implements Context {
 	public function theUserReloadsTheCurrentPageOfTheWebUI() {
 		$this->getSession()->reload();
 		$pageObject = $this->getCurrentPageObject();
+		if ($pageObject === null) {
+			$pageObject = $this->owncloudPage;
+		}
 		$pageObject->waitTillPageIsLoaded($this->getSession());
 	}
 

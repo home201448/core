@@ -45,7 +45,7 @@ default:
       paths:
         - %paths.base%/../features/apiSharing
       contexts:
-        - ShareesContext: *common_feature_context_params
+        - FeatureContext: *common_feature_context_params
 
     apiTrashbin:
       paths:
