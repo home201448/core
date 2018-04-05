@@ -1236,6 +1236,13 @@ trait Sharing {
 		return [
 			[
 				'capabilitiesApp' => 'files_sharing',
+				'capabilitiesParameter' => 'auto_accept_share',
+				'testingApp' => 'core',
+				'testingParameter' => 'shareapi_auto_accept_share',
+				'testingState' => true
+			],
+			[
+				'capabilitiesApp' => 'files_sharing',
 				'capabilitiesParameter' => 'api_enabled',
 				'testingApp' => 'core',
 				'testingParameter' => 'shareapi_enabled',
