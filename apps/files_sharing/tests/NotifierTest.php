@@ -21,9 +21,13 @@
 namespace OCA\Files_Sharing\Tests;
 
 use OCP\L10N\IFactory;
+use OCP\Notification\IManager as INotificationManager;
+use OCP\Share\IManager as IShareManager;
+use OCP\Share\Exceptions\ShareNotFound;
 use OCA\Files_Sharing\Notifier;
 use OCP\Notification\INotification;
 use OCP\Notification\IAction;
+use OCP\IGroupManager;
 
 class NotifierTest extends \Test\TestCase {
 
@@ -32,11 +36,34 @@ class NotifierTest extends \Test\TestCase {
 	 */
 	private $notifier;
 
+	/** @var INotificationManager */
+	private $notificationManager;
+
+	/** @var IShareManager */
+	private $shareManager;
+
+	/** @var IGroupManager */
+	private $groupManager;
+
 	public function setUp() {
 		parent::setUp();
 
+		$this->notificationManager = $this->getMockBuilder(INotificationManager::class)
+			->disableOriginalConstructor()
+			->getMock();
+		$this->shareManager = $this->getMockBuilder(IShareManager::class)
+			->disableOriginalConstructor()
+			->getMock();
+
+		$this->groupManager = $this->getMockBuilder(IGroupManager::class)
+			->disableOriginalConstructor()
+			->getMock();
+
 		$this->notifier = new Notifier(
-			\OC::$server->getL10NFactory()
+			\OC::$server->getL10NFactory(),
+			$this->notificationManager,
+			$this->shareManager,
+			$this->groupManager
 		);
 	}
 
