@@ -1233,6 +1233,7 @@ trait Sharing {
 	 * @return array of common sharing capability settings for testing
 	 */
 	protected function getCommonSharingConfigs() {
+		echo __METHOD__ . "\n";
 		return [
 			[
 				'capabilitiesApp' => 'files_sharing',

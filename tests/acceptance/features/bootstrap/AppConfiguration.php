@@ -302,6 +302,7 @@ trait AppConfiguration {
 	 * @return void
 	 */
 	public function prepareParametersBeforeScenario(BeforeScenarioScope $scope) {
+		echo __METHOD__ . "\n";
 		$user = $this->currentUser;
 		$this->currentUser = $this->getAdminUsername();
 		$this->resetAppConfigs();
@@ -316,6 +317,9 @@ trait AppConfiguration {
 	public function restoreParametersAfterScenario() {
 		$user = $this->currentUser;
 		$this->currentUser = $this->getAdminUsername();
+		echo __METHOD__ . "\n";
+		echo "restoring settings to:\n";
+		print_r($this->savedCapabilitiesChanges);
 		$this->modifyServerConfigs($this->savedCapabilitiesChanges);
 		$this->currentUser = $user;
 	}

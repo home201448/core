@@ -33,9 +33,12 @@ class FeatureContext extends \rdx\behatvars\BehatVariablesContext {
 	 * @return void
 	 */
 	protected function resetAppConfigs() {
+		echo __METHOD__ . "\n";
 		// Remember the current capabilities
 		$this->getCapabilitiesCheckResponse();
 		$this->savedCapabilitiesXml = $this->getCapabilitiesXml();
+		echo "saving capabilities:\n";
+		print_r($this->savedCapabilitiesXml);
 		// Set the required starting values for testing
 		$this->setCapabilities($this->getCommonSharingConfigs());
 	}
