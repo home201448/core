@@ -25,15 +25,14 @@ namespace OCA\Files\Command;
 use OC\Files\FileInfo;
 use OCP\Files\IRootFolder;
 use OCP\Files\Node;
+use OCP\Files\NotFoundException;
 use OCP\Files\Storage\IStorage;
 use OCP\IUser;
 use OCP\IUserManager;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Question\ConfirmationQuestion;
 
 
 /**
@@ -43,13 +42,6 @@ use Symfony\Component\Console\Question\ConfirmationQuestion;
  * @package OCA\Files\Command
  */
 class VerifyChecksums extends Command {
-
-
-	/**
-	 * Entry format ['file' => $nodeObject, 'correctChecksum' => $checksum]
-	 * @var array
-	 */
-	private $nodesWithBrokenChecksums = [];
 
 	/**
 	 * @var IRootFolder
@@ -83,7 +75,6 @@ class VerifyChecksums extends Command {
 	}
 
 	public function execute(InputInterface $input, OutputInterface $output) {
-
 		$pathOption = $input->getOption('path');
 		$userName = $input->getOption('user');
 
@@ -96,7 +87,7 @@ class VerifyChecksums extends Command {
 			return;
 		}
 
-		$walkFunction = function (Node $node) use ($output) {
+		$walkFunction = function (Node $node) use ($input, $output) {
 			$path = $node->getInternalPath();
 			$currentChecksums = $node->getChecksum();
 
@@ -110,10 +101,14 @@ class VerifyChecksums extends Command {
 			$actualChecksums = self::calculateActualChecksums($path, $node->getStorage());
 
 			if ($actualChecksums !== $currentChecksums) {
-				$this->nodesWithBrokenChecksums[] = ['file' => $node, 'correctChecksums' => $actualChecksums];
 				$output->writeln(
 					"<info>Mismatch for $path:\n Filecache:\t$currentChecksums\n Actual:\t$actualChecksums</info>"
 				);
+
+				if ($input->getOption('repair')) {
+					$output->writeln("<info>Repairing!</info>");
+					$this->updateChecksumsForNode($node, $actualChecksums);
+				}
 			}
 		};
 
@@ -125,27 +120,21 @@ class VerifyChecksums extends Command {
 		if ($userName && $this->userManager->userExists($userName)) {
 			$scanUserFunction($this->userManager->get($userName));
 		} else if ($userName && !$this->userManager->userExists($userName)) {
-			$output->writeln("<error>User $userName does not exist</error>");
+			$output->writeln("<error>User \"$userName\" does not exist</error>");
 			return;
 		} else if ($input->getOption('path')) {
-			$node = $this->rootFolder->get($input->getOption('path'));
-			$this->walkNodes([$node], $walkFunction);
-		} else {
-			$this->userManager->callForAllUsers($scanUserFunction);
-		}
 
-		if (!empty($this->nodesWithBrokenChecksums)) {
-			/** @var QuestionHelper $questionHelper */
-			$questionHelper = $this->getHelper('question');
-			$repairQuestion = new ConfirmationQuestion(
-				"Do you want to repair broken checksums (y/N)? ",
-				false
-			);
-
-			if ($input->getOption('repair') || $questionHelper->ask($input, $output, $repairQuestion)) {
-				$this->repairChecksumsForNodes($this->nodesWithBrokenChecksums);
+			try {
+				$node = $this->rootFolder->get($input->getOption('path'));
+			} catch (NotFoundException $ex) {
+				$output->writeln("<error>Path \"{$ex->getMessage()}\" not found.</error>");
 				return;
 			}
+
+			$this->walkNodes([$node], $walkFunction);
+
+		} else {
+			$this->userManager->callForAllUsers($scanUserFunction);
 		}
 	}
 
@@ -154,7 +143,6 @@ class VerifyChecksums extends Command {
 	 * Recursive walk nodes
 	 *
 	 * @param Node[] $nodes
-	 * @param $path
 	 * @param \Closure $callBack
 	 */
 	private function walkNodes(array $nodes, \Closure $callBack) {
@@ -167,19 +155,20 @@ class VerifyChecksums extends Command {
 		}
 	}
 
-
 	/**
-	 * @param array $nodes
+	 * @param Node $node
+	 * @param $correctChecksum
+	 * @throws NotFoundException
+	 * @throws \OCP\Files\InvalidPathException
+	 * @throws \OCP\Files\StorageNotAvailableException
 	 */
-	private function repairChecksumsForNodes(array $nodes) {
-		foreach ($nodes as $file) {
-			$storage = $file['file']->getStorage();
-			$cache = $storage->getCache();
-			$cache->update(
-				$file['file']->getId(),
-				['checksum' => $file['correctChecksums']]
-			);
-		}
+	private function updateChecksumsForNode(Node $node, $correctChecksum) {
+		$storage = $node->getStorage();
+		$cache = $storage->getCache();
+		$cache->update(
+			$node->getId(),
+			['checksum' => $correctChecksum]
+		);
 	}
 
 	/**
