@@ -140,6 +140,21 @@
 			this.$el.find('#filestable th').toggleClass('hidden', !exists);
 		},
 
+		/**
+		 * Trashbin files are stored as filename.dxxxxx.
+		 * Extract this from the data-file attribute of the selected files.
+		 *
+		 * @return array of file names
+		 */
+		getSelectedDataFiles: function() {
+			var trSelectedFiles = this.$el.find('tr.selected');
+			var filesFromAttribute = [];
+			for (var i = 0; i < trSelectedFiles.length; i++) {
+				filesFromAttribute.push(trSelectedFiles[i].getAttribute('data-file'));
+			}
+			return filesFromAttribute;
+		},
+
 		_removeCallback: function(result) {
 			if (result.status !== 'success') {
 				OC.dialogs.alert(result.data.message, t('files_trashbin', 'Error'));
@@ -171,20 +186,7 @@
 				};
 			}
 			else {
-				files = _.pluck(this.getSelectedFiles(), 'name');
-				/**
-				 * The getSelectedFiles gives the file name as it is seen in UI.
-				 * But the fact is filenames are storead as filename.dxxxxx. This
-				 * change helps to extract exact filename.
-				 */
-				var trSelectedFiles = this.$el.find('tr.selected');
-				var filesFromAttribute = [];
-				for (var i = 0; i < trSelectedFiles.length; i++) {
-					filesFromAttribute.push(trSelectedFiles[i].getAttribute('data-file'));
-				}
-				if (files !== filesFromAttribute) {
-					files = filesFromAttribute;
-				}
+				files = this.getSelectedDataFiles();
 				for (var i = 0; i < files.length; i++) {
 					var deleteAction = this.findFileEl(files[i]).children("td.date").children(".action.delete");
 					deleteAction.removeClass('icon-delete').addClass('icon-loading-small');
@@ -227,20 +229,7 @@
 				};
 			}
 			else {
-				files = _.pluck(this.getSelectedFiles(), 'name');
-				/*
-				The getSelectedFiles gives the file name as it is seen in UI.
-				But the fact is filenames are storead as filename.dxxxxx. This
-				change helps to extract exact filename.
-				 */
-				var trSelectedFiles = this.$el.find('tr.selected');
-				var filesFromAttribute = [];
-				for (var i = 0; i < trSelectedFiles.length; i++) {
-					filesFromAttribute.push(trSelectedFiles[i].getAttribute('data-file'));
-				}
-				if (files !== filesFromAttribute) {
-					files = filesFromAttribute;
-				}
+				files = this.getSelectedDataFiles();
 				params = {
 					files: JSON.stringify(files),
 					dir: this.getCurrentDirectory()
