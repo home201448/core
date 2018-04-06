@@ -79,3 +79,10 @@ So that other users have access to these files
 		And the user re-logs in with username "user2" and password "1234" to "%local_server%" using the webUI
 		And the user opens the folder "simple-folder" using the webUI
 		Then the file "data.zip" should not be listed on the webUI
+
+	Scenario: unshare a federation share
+		Given user "user1" from server "LOCAL" has shared "/lorem.txt" with user "user2" from server "REMOTE"
+		And user "user2" from server "REMOTE" has accepted the last pending share
+		And the user has reloaded the current page of the webUI
+		When the user unshares the file "lorem (2).txt" using the webUI
+		Then the file "lorem (2).txt" should not be listed on the webUI
