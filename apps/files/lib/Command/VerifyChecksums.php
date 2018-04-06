@@ -22,10 +22,12 @@
 namespace OCA\Files\Command;
 
 
-use OC\DB\Connection;
+use OC\Files\FileInfo;
+use OCP\Files\IRootFolder;
+use OCP\Files\Node;
 use OCP\Files\Storage\IStorage;
-use OCP\IDBConnection;
 use OCP\IUser;
+use OCP\IUserManager;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputInterface;
@@ -43,84 +45,105 @@ use Symfony\Component\Console\Question\ConfirmationQuestion;
 class VerifyChecksums extends Command {
 
 
-	private $fieIdsWithBrokenChecksums = [];
+	/**
+	 * Entry format ['file' => $nodeObject, 'correctChecksum' => $checksum]
+	 * @var array
+	 */
+	private $nodesWithBrokenChecksums = [];
+
+	/**
+	 * @var IRootFolder
+	 */
+	private $rootFolder;
+
+	/**
+	 * @var IUserManager
+	 */
+	private $userManager;
+
+	/**
+	 * VerifyChecksums constructor.
+	 *
+	 * @param IRootFolder $rootFolder
+	 * @param IUserManager $userManager
+	 */
+	public function __construct(IRootFolder $rootFolder, IUserManager $userManager) {
+		parent::__construct(null);
+		$this->rootFolder = $rootFolder;
+		$this->userManager = $userManager;
+	}
 
 	protected function configure() {
 		$this
 			->setName('files:checksums:verify')
-			->setDescription("Get all checksums in filecache and compares them by recalculating the checksum of the file.\n")
+			->setDescription("Get all checksums in filecache and compares them by recalculating the checksum of the file.")
 			->addOption('repair', 'r', InputOption::VALUE_NONE, "Repair filecache-entry with missmatched checksums.")
 			->addOption('user', 'u', InputOption::VALUE_REQUIRED, 'Specific user to check')
 			->addOption('path', 'p', InputOption::VALUE_REQUIRED, "Path to check relative to data e.g /john/files/", '');
 	}
 
-
 	public function execute(InputInterface $input, OutputInterface $output) {
 
-		if (!$input->getOption('path') && !$input->getOption('user')) {
+		$pathOption = $input->getOption('path');
+		$userName = $input->getOption('user');
+
+		if (!$pathOption && !$userName) {
 			$output->writeln('<info>This operation might take very long.</info>');
 		}
 
-		$scanFunction = function(IUser $user) use ($input, $output) {
-			$scanner = new \OC\Files\Utils\Scanner(
-				$user->getUID(),
-				$this->reconnectToDatabase($output) ,
-				\OC::$server->getLogger()
-			);
-
-			$rootFolder =  \OC::$server->getRootFolder();
-			$scanner->listen("\OC\Files\Utils\Scanner", 'scanFile', function ($path) use ($output, $rootFolder, $user) {
-				try {
-					$file = $rootFolder->get($path);
-					$currentChecksums = $file->getChecksum();
-					$output->writeln("$path => $currentChecksums", OutputInterface::VERBOSITY_VERBOSE);
-				} catch (\Exception $ex) {
-					$output->writeln("$path => Not in cache yet", OutputInterface::VERBOSITY_VERBOSE);
-					return;
-				}
-
-				// Files without calculated checksum can`t cause checksum errors
-				if (empty($currentChecksums)) {
-					return;
-				}
-
-				// StorageWrappers use getSourcePath() internally which already prepends the username to the path
-				// so we need to remove it here or else we will get paths like admin//admin/thumbnails/4/32-32.png
-				$pathWithoutUid = preg_replace( "/\\/{$user->getUID()}/", '', $path, 1);
-
-				$actualChecksums = self::calculateActualChecksums($pathWithoutUid, $file->getStorage());
-
-				if ($actualChecksums !== $currentChecksums) {
-					$this->fieIdsWithBrokenChecksums[] = ['file' => $file, 'correctChecksums' => $actualChecksums];
-					$output->writeln(
-						"<info>Mismatch for $path:\n Filecache:\t$currentChecksums\n Actual:\t$actualChecksums</info>"
-					);
-				}
-			});
-
-			$scanner->scan($input->getOption('path'));
-
-		};
-
-		$userManager = \OC::$server->getUserManager();
-		$user = $input->getOption('user');
-
-		if ($user && $userManager->userExists($user)) {
-			$scanFunction($userManager->get($user));
-		} else if ($user && !$userManager->userExists($user)) {
-			$output->writeln("<error>User $user does not exist</error>");
+		if ($pathOption && $userName) {
+			$output->writeln('<error>Please use either path or user exclusively</error>');
 			return;
-		} else {
-			$userManager->callForAllUsers($scanFunction);
 		}
 
-		/** @var QuestionHelper $questionHelper */
-		$questionHelper = $this->getHelper('question');
-		$repairQuestion = new ConfirmationQuestion("Do you want to reset (repair) broken checksums (y/N)? ", false);
+		$walkFunction = function (Node $node) use ($output) {
+			$path = $node->getInternalPath();
+			$currentChecksums = $node->getChecksum();
 
-		if (!empty($this->fieIdsWithBrokenChecksums)) {
+			// Files without calculated checksum can`t cause checksum errors
+			if (empty($currentChecksums)) {
+				$output->writeln("Skipping $path => No Checksum", OutputInterface::VERBOSITY_VERBOSE);
+				return;
+			}
+
+			$output->writeln("Checking $path => $currentChecksums", OutputInterface::VERBOSITY_VERBOSE);
+			$actualChecksums = self::calculateActualChecksums($path, $node->getStorage());
+
+			if ($actualChecksums !== $currentChecksums) {
+				$this->nodesWithBrokenChecksums[] = ['file' => $node, 'correctChecksums' => $actualChecksums];
+				$output->writeln(
+					"<info>Mismatch for $path:\n Filecache:\t$currentChecksums\n Actual:\t$actualChecksums</info>"
+				);
+			}
+		};
+
+		$scanUserFunction = function(IUser $user) use ($input, $output, $walkFunction) {
+			$userFolder = $this->rootFolder->getUserFolder($user->getUID())->getParent();
+			$this->walkNodes($userFolder->getDirectoryListing(), $walkFunction);
+		};
+
+		if ($userName && $this->userManager->userExists($userName)) {
+			$scanUserFunction($this->userManager->get($userName));
+		} else if ($userName && !$this->userManager->userExists($userName)) {
+			$output->writeln("<error>User $userName does not exist</error>");
+			return;
+		} else if ($input->getOption('path')) {
+			$node = $this->rootFolder->get($input->getOption('path'));
+			$this->walkNodes([$node], $walkFunction);
+		} else {
+			$this->userManager->callForAllUsers($scanUserFunction);
+		}
+
+		if (!empty($this->nodesWithBrokenChecksums)) {
+			/** @var QuestionHelper $questionHelper */
+			$questionHelper = $this->getHelper('question');
+			$repairQuestion = new ConfirmationQuestion(
+				"Do you want to repair broken checksums (y/N)? ",
+				false
+			);
+
 			if ($input->getOption('repair') || $questionHelper->ask($input, $output, $repairQuestion)) {
-				self::repairChecksumsForFiles($this->fieIdsWithBrokenChecksums);
+				$this->repairChecksumsForNodes($this->nodesWithBrokenChecksums);
 				return;
 			}
 		}
@@ -128,10 +151,28 @@ class VerifyChecksums extends Command {
 
 
 	/**
-	 * @param  $files
+	 * Recursive walk nodes
+	 *
+	 * @param Node[] $nodes
+	 * @param $path
+	 * @param \Closure $callBack
 	 */
-	private static function repairChecksumsForFiles(array $files) {
-		foreach ($files as $file) {
+	private function walkNodes(array $nodes, \Closure $callBack) {
+		foreach ($nodes as $node) {
+			if ($node->getType() === FileInfo::TYPE_FOLDER) {
+				$this->walkNodes($node->getDirectoryListing(), $callBack);
+			} else {
+				$callBack($node);
+			}
+		}
+	}
+
+
+	/**
+	 * @param array $nodes
+	 */
+	private function repairChecksumsForNodes(array $nodes) {
+		foreach ($nodes as $file) {
 			$storage = $file['file']->getStorage();
 			$cache = $storage->getCache();
 			$cache->update(
@@ -142,28 +183,11 @@ class VerifyChecksums extends Command {
 	}
 
 	/**
-	 * @return \OCP\IDBConnection
+	 * @param $path
+	 * @param IStorage $storage
+	 * @return string
+	 * @throws \OCP\Files\StorageNotAvailableException
 	 */
-	protected function reconnectToDatabase(OutputInterface $output) {
-		/** @var Connection | IDBConnection $connection*/
-		$connection = \OC::$server->getDatabaseConnection();
-		try {
-			$connection->close();
-		} catch (\Exception $ex) {
-			$output->writeln("<info>Error while disconnecting from database: {$ex->getMessage()}</info>");
-		}
-		while (!$connection->isConnected()) {
-			try {
-				$connection->connect();
-			} catch (\Exception $ex) {
-				$output->writeln("<info>Error while re-connecting to database: {$ex->getMessage()}</info>");
-				sleep(60);
-			}
-		}
-		return $connection;
-	}
-
-
 	private static function calculateActualChecksums($path, IStorage $storage) {
 		return sprintf(
 			'SHA1:%s MD5:%s ADLER32:%s',
@@ -173,3 +197,4 @@ class VerifyChecksums extends Command {
 		);
 	}
 }
+
