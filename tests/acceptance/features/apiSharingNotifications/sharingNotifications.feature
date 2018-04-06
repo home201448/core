@@ -52,3 +52,17 @@ So that ....
 		When user "user0" shares folder "/PARENT" with user "user1" using the API
 		And user "user0" shares file "/textfile0.txt" with user "user1" using the API
 		Then user "user1" should have 0 notification
+
+	Scenario: discard notification if target user is not member of the group anymore
+		Given parameter "shareapi_auto_accept_share" of app "core" has been set to "no"
+		When user "user0" shares folder "/PARENT" with group "grp1" using the API
+		And the administrator removes user "user1" from group "grp1" using the API
+		Then user "user1" should have 0 notifications
+		Then user "user2" should have 1 notification
+
+	Scenario: discard notification if group is deleted
+		Given parameter "shareapi_auto_accept_share" of app "core" has been set to "no"
+		When user "user0" shares folder "/PARENT" with group "grp1" using the API
+		And the administrator deletes group "grp1" using the API
+		Then user "user1" should have 0 notifications
+		Then user "user2" should have 0 notification
