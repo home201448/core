@@ -23,6 +23,7 @@ namespace OCA\Files_Sharing\Tests;
 use OCP\L10N\IFactory;
 use OCP\Notification\IManager as INotificationManager;
 use OCP\Share\IManager as IShareManager;
+use OCP\Share\IShare;
 use OCP\Share\Exceptions\ShareNotFound;
 use OCA\Files_Sharing\Notifier;
 use OCP\Notification\INotification;
@@ -113,6 +114,11 @@ class NotifierTest extends \Test\TestCase {
 	 * @dataProvider providesPrepare
 	 */
 	public function testPrepare($subject, $subjectParams, $expectedSubject) {
+		$share = $this->createMock(IShare::class);
+		$share->method('getShareType')->willReturn(\OCP\Share::SHARE_TYPE_USER);
+
+		$this->shareManager->method('getShareById')->willReturn($share);
+
 		$notification = $this->createMock(INotification::class);
 
 		$notification->method('getApp')->willReturn('files_sharing');
