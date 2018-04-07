@@ -23,6 +23,7 @@ namespace OCA\Files\Command;
 
 
 use OC\Files\FileInfo;
+use OC\Files\Storage\Wrapper\Checksum;
 use OCP\Files\IRootFolder;
 use OCP\Files\Node;
 use OCP\Files\NotFoundException;
@@ -43,6 +44,11 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 class VerifyChecksums extends Command {
 
+
+	const EXIT_NO_ERRORS = 0;
+	const EXIT_CHECKSUM_ERRORS = 1;
+	const EXIT_INVALID_ARGS = 2;
+
 	/**
 	 * @var IRootFolder
 	 */
@@ -52,6 +58,8 @@ class VerifyChecksums extends Command {
 	 * @var IUserManager
 	 */
 	private $userManager;
+
+	private $exitStatus = self::EXIT_NO_ERRORS;
 
 	/**
 	 * VerifyChecksums constructor.
@@ -84,7 +92,8 @@ class VerifyChecksums extends Command {
 
 		if ($pathOption && $userName) {
 			$output->writeln('<error>Please use either path or user exclusively</error>');
-			return;
+			$this->exitStatus = self::EXIT_INVALID_ARGS;
+
 		}
 
 		$walkFunction = function (Node $node) use ($input, $output) {
@@ -105,9 +114,12 @@ class VerifyChecksums extends Command {
 					"<info>Mismatch for $path:\n Filecache:\t$currentChecksums\n Actual:\t$actualChecksums</info>"
 				);
 
+				$this->exitStatus = self::EXIT_CHECKSUM_ERRORS;
+
 				if ($input->getOption('repair')) {
 					$output->writeln("<info>Repairing!</info>");
 					$this->updateChecksumsForNode($node, $actualChecksums);
+					$this->exitStatus = self::EXIT_NO_ERRORS;
 				}
 			}
 		};
@@ -121,14 +133,15 @@ class VerifyChecksums extends Command {
 			$scanUserFunction($this->userManager->get($userName));
 		} else if ($userName && !$this->userManager->userExists($userName)) {
 			$output->writeln("<error>User \"$userName\" does not exist</error>");
-			return;
+			$this->exitStatus = self::EXIT_INVALID_ARGS;
 		} else if ($input->getOption('path')) {
 
 			try {
 				$node = $this->rootFolder->get($input->getOption('path'));
 			} catch (NotFoundException $ex) {
 				$output->writeln("<error>Path \"{$ex->getMessage()}\" not found.</error>");
-				return;
+				$this->exitStatus = self::EXIT_INVALID_ARGS;
+				return $this->exitStatus;
 			}
 
 			$this->walkNodes([$node], $walkFunction);
@@ -136,6 +149,9 @@ class VerifyChecksums extends Command {
 		} else {
 			$this->userManager->callForAllUsers($scanUserFunction);
 		}
+
+
+		return $this->exitStatus;
 	}
 
 
@@ -179,7 +195,7 @@ class VerifyChecksums extends Command {
 	 */
 	private static function calculateActualChecksums($path, IStorage $storage) {
 		return sprintf(
-			'SHA1:%s MD5:%s ADLER32:%s',
+			Checksum::CHECKSUMS_DB_FORMAT,
 			$storage->hash('sha1', $path),
 			$storage->hash('md5', $path),
 			$storage->hash('adler32', $path)
